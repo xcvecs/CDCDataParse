@@ -1,4 +1,4 @@
-package top.byteinfo.source.maxwell.schema.columndef;
+package top.byteinfo.iter.schema.columndef;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

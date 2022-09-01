@@ -2,7 +2,7 @@ package top.byteinfo.iter.schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
+import top.byteinfo.iter.schema.columndef.ColumnDef;
 
 import java.util.ArrayList;
 import java.util.List;

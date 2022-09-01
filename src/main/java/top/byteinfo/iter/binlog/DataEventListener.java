@@ -1,4 +1,4 @@
-package top.byteinfo.iter;
+package top.byteinfo.iter.binlog;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
 import com.github.shyiko.mysql.binlog.event.Event;

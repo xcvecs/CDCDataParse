@@ -1,4 +1,4 @@
-package top.byteinfo.source.maxwell.schema.columndef;
+package top.byteinfo.iter.schema.columndef;
 
 public class FloatColumnDef extends ColumnDef {
 	private FloatColumnDef(String name, String type, short pos) {

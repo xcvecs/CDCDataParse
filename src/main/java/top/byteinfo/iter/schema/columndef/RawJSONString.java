@@ -1,4 +1,4 @@
-package top.byteinfo.source.maxwell.schema.columndef;
+package top.byteinfo.iter.schema.columndef;
 
 // we wrap up raw json here and use the type of this class to allow
 // tunneling pre-serialized JSON data through a RowMap

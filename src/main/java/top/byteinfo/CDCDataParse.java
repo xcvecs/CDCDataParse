@@ -4,7 +4,7 @@ package top.byteinfo;
 import top.byteinfo.iter.DataParseConfig;
 import top.byteinfo.iter.DataParseContext;
 import top.byteinfo.iter.MaxwellBinlogReplicator;
-import top.byteinfo.iter.SchemaCapture;
+import top.byteinfo.iter.schema.SchemaCapture;
 import top.byteinfo.iter.connect.BinLogConnector;
 import top.byteinfo.source.maxwell.schema.CustomSchema;
 

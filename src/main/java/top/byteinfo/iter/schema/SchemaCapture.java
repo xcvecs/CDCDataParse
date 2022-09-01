@@ -1,12 +1,8 @@
-package top.byteinfo.iter;
+package top.byteinfo.iter.schema;
 
 import org.apache.commons.lang3.StringUtils;
-import top.byteinfo.iter.schema.DataBase;
-import top.byteinfo.iter.schema.Schema;
-import top.byteinfo.iter.schema.ServerCaseSensitivity;
-import top.byteinfo.iter.schema.Table;
 import top.byteinfo.source.maxwell.schema.CustomDatabase;
-import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
+import top.byteinfo.iter.schema.columndef.ColumnDef;
 
 import java.sql.*;
 import java.util.*;

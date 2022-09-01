@@ -3,8 +3,10 @@ package top.byteinfo.iter;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
+import top.byteinfo.iter.binlog.DataEventListener;
 import top.byteinfo.iter.connect.BinLogConnector;
 import top.byteinfo.iter.schema.Schema;
+import top.byteinfo.iter.schema.SchemaCapture;
 
 import java.sql.Connection;
 import java.sql.SQLException;

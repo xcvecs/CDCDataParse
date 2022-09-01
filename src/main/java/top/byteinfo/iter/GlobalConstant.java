@@ -1,6 +1,7 @@
 package top.byteinfo.iter;
 
 import top.byteinfo.iter.schema.DataBase;
+import top.byteinfo.iter.schema.SchemaCapture;
 
 import java.sql.ResultSet;
 

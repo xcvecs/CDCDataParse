@@ -1,7 +1,7 @@
 package top.byteinfo.source.maxwell.schema;
 
 
-import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
+import top.byteinfo.iter.schema.columndef.ColumnDef;
 
 import java.util.ArrayList;
 import java.util.List;

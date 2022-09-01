@@ -2,7 +2,7 @@ package top.byteinfo.iter.connect;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
-import top.byteinfo.iter.DataEventListener;
+import top.byteinfo.iter.binlog.DataEventListener;
 
 import java.io.IOException;
 

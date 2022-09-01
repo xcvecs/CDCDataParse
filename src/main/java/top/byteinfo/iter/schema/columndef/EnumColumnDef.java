@@ -1,4 +1,4 @@
-package top.byteinfo.source.maxwell.schema.columndef;
+package top.byteinfo.iter.schema.columndef;
 
 public class EnumColumnDef extends EnumeratedColumnDef {
 	private EnumColumnDef(String name, String type, short pos, String[] enumValues) {

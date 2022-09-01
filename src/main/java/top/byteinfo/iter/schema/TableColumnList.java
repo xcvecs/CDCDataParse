@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
-import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
+import top.byteinfo.iter.schema.columndef.ColumnDef;
 
 import java.util.ArrayList;
 import java.util.Iterator;

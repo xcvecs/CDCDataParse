@@ -5,6 +5,7 @@ import com.github.shyiko.mysql.binlog.event.EventType;
 import com.github.shyiko.mysql.binlog.event.QueryEventData;
 import top.byteinfo.iter.binlog.DataEvent;
 import top.byteinfo.iter.schema.Schema;
+import top.byteinfo.iter.schema.SchemaCapture;
 import top.byteinfo.iter.schema.Table;
 
 import java.util.LinkedHashMap;
