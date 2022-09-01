@@ -6,12 +6,16 @@ public class DataParseConfig {
 
     private final Properties properties;
 
+    public Properties getProperties() {
+        return properties;
+    }
     public DataParseConfig() {
         this.properties = new Properties();
-        setupDataSource();
+        setupDataSourceConfig();
+        setupBinlogConnectConfig();
     }
 
-    private void setupDataSource() {
+    private void setupDataSourceConfig() {
 //        setup dataSource
         properties.setProperty("dataSource.setDriverClassName", "com.mysql.cj.jdbc.Driver");
         properties.setProperty("dataSource.setUsername", "root");
@@ -25,7 +29,7 @@ public class DataParseConfig {
 
 
 
-    public Properties getProperties() {
-        return properties;
+    private void setupBinlogConnectConfig(){
+        properties.setProperty("binLogConnector.registerEventListener", String.valueOf(1<<13));
     }
 }

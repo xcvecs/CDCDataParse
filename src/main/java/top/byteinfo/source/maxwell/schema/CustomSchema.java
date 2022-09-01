@@ -7,32 +7,32 @@ import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
 import java.util.*;
 
 
-public class Schema {
-	private final LinkedHashMap<String, Database> dbMap;
+public class CustomSchema {
+	private final LinkedHashMap<String, CustomDatabase> dbMap;
 	private final String charset;
 	private final CustomSchemaCapture.CaseSensitivity sensitivity;
 
-	public Schema(List<Database> databases, String charset, CustomSchemaCapture.CaseSensitivity sensitivity) {
+	public CustomSchema(List<CustomDatabase> customDatabases, String charset, CustomSchemaCapture.CaseSensitivity sensitivity) {
 		this.sensitivity = sensitivity;
 		this.charset = charset;
 		this.dbMap = new LinkedHashMap<>();
 
-		for ( Database d : databases )
+		for ( CustomDatabase d : customDatabases)
 			addDatabase(d);
 	}
 
-	public Collection<Database> getDatabases() { return Collections.unmodifiableCollection(this.dbMap.values()); }
+	public Collection<CustomDatabase> getDatabases() { return Collections.unmodifiableCollection(this.dbMap.values()); }
 
 	public List<String> getDatabaseNames () {
 		ArrayList<String> names = new ArrayList<>(this.dbMap.size());
 
-		for ( Database d : this.dbMap.values() ) {
+		for ( CustomDatabase d : this.dbMap.values() ) {
 			names.add(d.getName());
 		}
 		return names;
 	}
 
-	public Database findDatabase(String string) {
+	public CustomDatabase findDatabase(String string) {
 		return this.dbMap.get(getNormalizedDbName(string));
 	}
 
@@ -47,8 +47,8 @@ public class Schema {
 		}
 	}
 
-	public Database findDatabaseOrThrow(String name) throws Exception {
-		Database d = findDatabase(name);
+	public CustomDatabase findDatabaseOrThrow(String name) throws Exception {
+		CustomDatabase d = findDatabase(name);
 		if ( d == null )
 			throw new RuntimeException("Couldn't find database '" + name + "'");
 		return d;
@@ -58,18 +58,18 @@ public class Schema {
 		return findDatabase(string) != null;
 	}
 
-	public void addDatabase(Database d) {
+	public void addDatabase(CustomDatabase d) {
 		d.setSensitivity(sensitivity);
 		this.dbMap.put(getNormalizedDbName(d.getName()), d);
 	}
 
-	public void removeDatabase(Database d) {
+	public void removeDatabase(CustomDatabase d) {
 		this.dbMap.remove(getNormalizedDbName(d.getName()));
 	}
 
-	private void diffDBList(List<String> diff, Schema a, Schema b, String nameA, String nameB, boolean recurse) {
-		for ( Database d : a.dbMap.values() ) {
-			Database matchingDB = b.findDatabase(d.getName());
+	private void diffDBList(List<String> diff, CustomSchema a, CustomSchema b, String nameA, String nameB, boolean recurse) {
+		for ( CustomDatabase d : a.dbMap.values() ) {
+			CustomDatabase matchingDB = b.findDatabase(d.getName());
 
 			if ( matchingDB == null )
 				diff.add("-- Database " + d.getName() + " did not exist in " + nameB);
@@ -79,7 +79,7 @@ public class Schema {
 
 	}
 
-	public List<String> diff(Schema that, String thisName, String thatName) {
+	public List<String> diff(CustomSchema that, String thisName, String thatName) {
 		List<String> diff = new ArrayList<>();
 
 		diffDBList(diff, this, that, thisName, thatName, true);
@@ -87,7 +87,7 @@ public class Schema {
 		return diff;
 	}
 
-	public boolean equals(Schema that) {
+	public boolean equals(CustomSchema that) {
 		return diff(that, "a", "b").size() == 0;
 	}
 
@@ -99,27 +99,27 @@ public class Schema {
 		return sensitivity;
 	};
 
-	public List<Pair<FullColumnDef, FullColumnDef>> matchColumns(Schema thatSchema) {
+	public List<Pair<FullColumnDef, FullColumnDef>> matchColumns(CustomSchema thatCustomSchema) {
 		ArrayList<Pair<FullColumnDef, FullColumnDef>> list = new ArrayList<>();
 
-		for ( Database thisDatabase : this.getDatabases() ) {
-			Database thatDatabase = thatSchema.findDatabase(thisDatabase.getName());
+		for ( CustomDatabase thisCustomDatabase : this.getDatabases() ) {
+			CustomDatabase thatCustomDatabase = thatCustomSchema.findDatabase(thisCustomDatabase.getName());
 
-			if ( thatDatabase == null )
+			if ( thatCustomDatabase == null )
 				continue;
 
-			for ( Table thisTable : thisDatabase.getTableList() ) {
-				Table thatTable = thatDatabase.findTable(thisTable.getName());
+			for ( CustomTable thisCustomTable : thisCustomDatabase.getTableList() ) {
+				CustomTable thatCustomTable = thatCustomDatabase.findTable(thisCustomTable.getName());
 
-				if ( thatTable == null )
+				if ( thatCustomTable == null )
 					continue;
 
-				for ( ColumnDef thisColumn : thisTable.getColumnList() ) {
-					ColumnDef thatColumn = thatTable.findColumn(thisColumn.getName());
+				for ( ColumnDef thisColumn : thisCustomTable.getColumnList() ) {
+					ColumnDef thatColumn = thatCustomTable.findColumn(thisColumn.getName());
 					if ( thatColumn != null )
 						list.add(Pair.of(
-								new FullColumnDef(thisDatabase, thisTable, thisColumn),
-								new FullColumnDef(thatDatabase, thatTable, thatColumn)
+								new FullColumnDef(thisCustomDatabase, thisCustomTable, thisColumn),
+								new FullColumnDef(thatCustomDatabase, thatCustomTable, thatColumn)
 						));
 				}
 			}
@@ -129,22 +129,22 @@ public class Schema {
 
 
 	public static class FullColumnDef {
-		private final Database db;
-		private final Table table;
+		private final CustomDatabase db;
+		private final CustomTable customTable;
 		private final ColumnDef columnDef;
 
-		public FullColumnDef(Database db, Table table, ColumnDef columnDef) {
+		public FullColumnDef(CustomDatabase db, CustomTable customTable, ColumnDef columnDef) {
 			this.db = db;
-			this.table = table;
+			this.customTable = customTable;
 			this.columnDef = columnDef;
 		}
 
-		public Database getDb() {
+		public CustomDatabase getDb() {
 			return db;
 		}
 
-		public Table getTable() {
-			return table;
+		public CustomTable getTable() {
+			return customTable;
 		}
 
 		public ColumnDef getColumnDef() {

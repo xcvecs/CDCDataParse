@@ -1,9 +1,9 @@
 package top.byteinfo.iter;
 
 import org.apache.commons.lang3.StringUtils;
-import top.byteinfo.source.maxwell.schema.Database;
-import top.byteinfo.source.maxwell.schema.Schema;
-import top.byteinfo.source.maxwell.schema.Table;
+import top.byteinfo.source.maxwell.schema.CustomDatabase;
+import top.byteinfo.source.maxwell.schema.CustomTable;
+import top.byteinfo.source.maxwell.schema.CustomSchema;
 import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
 
 import java.sql.*;
@@ -28,6 +28,7 @@ public class CustomSchemaCapture implements AutoCloseable {
     private final PreparedStatement tablePreparedStatement;
     private final PreparedStatement columnPreparedStatement;
     private final PreparedStatement pkPreparedStatement;
+
     String dbCaptureQuery_old =
             "SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.SCHEMATA";
 
@@ -93,9 +94,7 @@ public class CustomSchemaCapture implements AutoCloseable {
             WHERE CONSTRAINT_NAME = 'PRIMARY' AND TABLE_SCHEMA = ?
             ORDER BY TABLE_NAME, ORDINAL_POSITION             
             """;
-    String sql = """
-            select * from mysql;
-            """;
+
 
     public CustomSchemaCapture(
             Connection connection,
@@ -139,9 +138,9 @@ public class CustomSchemaCapture implements AutoCloseable {
         return ((major == 5 && minor >= 6) || major > 5);
     }
 
-    public Schema capture() throws SQLException {
+    public CustomSchema capture() throws SQLException {
 //        LOGGER.debug("Capturing schemas...");
-        ArrayList<Database> databases = new ArrayList<>();
+        ArrayList<CustomDatabase> customDatabases = new ArrayList<>();
 
 //        String dbCaptureQuery =
 //                "SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.SCHEMATA";
@@ -163,23 +162,23 @@ public class CustomSchemaCapture implements AutoCloseable {
                     if (IGNORED_DATABASES.contains(dbName))
                         continue;
 
-                    Database db = new Database(dbName, charset);
-                    databases.add(db);
+                    CustomDatabase db = new CustomDatabase(dbName, charset);
+                    customDatabases.add(db);
                 }
             }
         }
 
-        int size = databases.size();
+        int size = customDatabases.size();
 //        LOGGER.debug("Starting schema capture of {} databases...", size);
         int counter = 1;
-        for (Database db : databases) {
+        for (CustomDatabase db : customDatabases) {
 //            LOGGER.debug("{}/{} Capturing {}...", counter, size, db.getName());
             captureDatabase(db);
             counter++;
         }
 //        LOGGER.debug("{} database schemas captured!", size);
 
-        return new Schema(databases, captureDefaultCharset(), this.sensitivity);
+        return new CustomSchema(customDatabases, captureDefaultCharset(), this.sensitivity);
     }
 
     private String captureDefaultCharset() throws SQLException {
@@ -191,29 +190,31 @@ public class CustomSchemaCapture implements AutoCloseable {
         }
     }
 
-    private void captureDatabase(Database db) throws SQLException {
+    private void captureDatabase(CustomDatabase db) throws SQLException {
+
         tablePreparedStatement.setString(1, db.getName());
         Sql.prepareInList(tablePreparedStatement, 2, includeTables);
 
-        HashMap<String, Table> tables = new HashMap<>();
+        HashMap<String, CustomTable> customTables = new HashMap<>();
         try (ResultSet rs = tablePreparedStatement.executeQuery()) {
             while (rs.next()) {
                 String tableName = rs.getString("TABLE_NAME");
                 String characterSetName = rs.getString("CHARACTER_SET_NAME");
-                Table t = db.buildTable(tableName, characterSetName);
-                tables.put(tableName, t);
+                CustomTable t = db.buildTable(tableName, characterSetName);
+                customTables.put(tableName, t);
             }
         }
-        captureTables(db, tables);
+
+        captureTables(db, customTables);
     }
 
-    private void captureTables(Database db, HashMap<String, Table> tables) throws SQLException {
+    private void captureTables(CustomDatabase db, HashMap<String, CustomTable> customTables) throws SQLException {
         columnPreparedStatement.setString(1, db.getName());
 
         try (ResultSet r = columnPreparedStatement.executeQuery()) {
 
             HashMap<String, Integer> pkIndexCounters = new HashMap<>();
-            for (String tableName : tables.keySet()) {
+            for (String tableName : customTables.keySet()) {
                 pkIndexCounters.put(tableName, 0);
             }
 
@@ -221,8 +222,8 @@ public class CustomSchemaCapture implements AutoCloseable {
                 String[] enumValues = null;
                 String tableName = r.getString("TABLE_NAME");
 
-                if (tables.containsKey(tableName)) {
-                    Table t = tables.get(tableName);
+                if (customTables.containsKey(tableName)) {
+                    CustomTable t = customTables.get(tableName);
                     String colName = r.getString("COLUMN_NAME");
                     String colType = r.getString("DATA_TYPE");
                     String colEnc = r.getString("CHARACTER_SET_NAME");
@@ -249,7 +250,7 @@ public class CustomSchemaCapture implements AutoCloseable {
             }
         }
 
-        captureTablesPK(db, tables);
+        captureTablesPK(db, customTables);
     }
 
     public String[] extractEnumValues(String expandedType) {
@@ -278,13 +279,13 @@ public class CustomSchemaCapture implements AutoCloseable {
         return result.toArray(new String[0]);
     }
 
-    private void captureTablesPK(Database db, HashMap<String, Table> tables) throws SQLException {
+    private void captureTablesPK(CustomDatabase db, HashMap<String, CustomTable> customTables) throws SQLException {
         pkPreparedStatement.setString(1, db.getName());
 
         HashMap<String, ArrayList<String>> tablePKMap = new HashMap<>();
 
         try (ResultSet rs = pkPreparedStatement.executeQuery()) {
-            for (String tableName : tables.keySet()) {
+            for (String tableName : customTables.keySet()) {
                 tablePKMap.put(tableName, new ArrayList<>());
             }
 
@@ -299,11 +300,11 @@ public class CustomSchemaCapture implements AutoCloseable {
             }
         }
 
-        for (Map.Entry<String, Table> entry : tables.entrySet()) {
+        for (Map.Entry<String, CustomTable> entry : customTables.entrySet()) {
             String key = entry.getKey();
-            Table table = entry.getValue();
+            CustomTable customTable = entry.getValue();
 
-            table.setPKList(tablePKMap.get(key));
+            customTable.setPKList(tablePKMap.get(key));
         }
     }
 

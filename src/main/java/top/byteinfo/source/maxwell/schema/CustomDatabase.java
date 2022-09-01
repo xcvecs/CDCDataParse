@@ -7,28 +7,28 @@ import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Database {
+public class CustomDatabase {
 	private final String name;
-	private final List<Table> tableList;
+	private final List<CustomTable> customTableList;
 	private String charset;
 	private CustomSchemaCapture.CaseSensitivity sensitivity;
 
-	public Database(String name, List<Table> tables, String charset) {
+	public CustomDatabase(String name, List<CustomTable> customTables, String charset) {
 		this.name = name;
-		if ( tables == null )
-			this.tableList = new ArrayList<>();
+		if ( customTables == null )
+			this.customTableList = new ArrayList<>();
 		else
-			this.tableList = tables;
+			this.customTableList = customTables;
 		this.charset = charset;
 	}
 
-	public Database(String name, String charset) {
+	public CustomDatabase(String name, String charset) {
 		this(name, null, charset);
 	}
 
 	public List<String> getTableNames() {
 		ArrayList<String> names = new ArrayList<String>();
-		for ( Table t : this.tableList ) {
+		for ( CustomTable t : this.customTableList) {
 			names.add(t.getName());
 		}
 		return names;
@@ -41,16 +41,16 @@ public class Database {
 			return a.toLowerCase().equals(b.toLowerCase());
 	}
 
-	public Table findTable(String name) {
-		for ( Table t: this.tableList ) {
+	public CustomTable findTable(String name) {
+		for ( CustomTable t: this.customTableList) {
 			if ( compareTableNames(name, t.getName()))
 				return t;
 		}
 		return null;
 	}
 
-	public Table findTableOrThrow(String table) throws Exception {
-		Table t = findTable(table);
+	public CustomTable findTableOrThrow(String table) throws Exception {
+		CustomTable t = findTable(table);
 		if ( t == null )
 			throw new RuntimeException("Couldn't find table '" + table + "'" + " in database " + this.name);
 
@@ -62,22 +62,22 @@ public class Database {
 	}
 
 	public void removeTable(String name) {
-		Table t = findTable(name);
+		CustomTable t = findTable(name);
 		if ( t != null )
-			tableList.remove(t);
+			customTableList.remove(t);
 	}
 
-	public Database copy() {
-		Database d = new Database(this.name, this.charset);
-		for ( Table t: this.tableList ) {
+	public CustomDatabase copy() {
+		CustomDatabase d = new CustomDatabase(this.name, this.charset);
+		for ( CustomTable t: this.customTableList) {
 			d.addTable(t.copy());
 		}
 		return d;
 	}
 
-	private void diffTableList(List<String> diffs, Database a, Database b, String nameA, String nameB, boolean recurse) {
-		for ( Table t : a.getTableList() ) {
-			Table other = b.findTable(t.getName());
+	private void diffTableList(List<String> diffs, CustomDatabase a, CustomDatabase b, String nameA, String nameB, boolean recurse) {
+		for ( CustomTable t : a.getTableList() ) {
+			CustomTable other = b.findTable(t.getName());
 			if ( other == null )
 				diffs.add("database " + a.getName() + " did not contain table " + t.getName() + " in " + nameB);
 			else if ( recurse )
@@ -85,7 +85,7 @@ public class Database {
 		}
 	}
 
-	public void diff(List<String> diffs, Database other, String nameA, String nameB) {
+	public void diff(List<String> diffs, CustomDatabase other, String nameA, String nameB) {
 		if ( !this.charset.toLowerCase().equals(other.getCharset().toLowerCase()) ) {
 			diffs.add("-- Database " + this.getName() + " had different charset: "
 					+ this.getCharset() + " in " + nameA + ", "
@@ -112,28 +112,29 @@ public class Database {
 		return name;
 	}
 
-	public List<Table> getTableList() {
-		return tableList;
+	public List<CustomTable> getTableList() {
+		return customTableList;
 	}
 
-	public void addTable(Table table) {
-		table.setDatabase(this.name);
-		this.tableList.add(table);
+	public void addTable(CustomTable customTable) {
+		customTable.setDatabase(this.name);
+		this.customTableList.add(customTable);
 	}
 
-	public Table buildTable(String name, String charset, List<ColumnDef> list, List<String> pks) {
+	public CustomTable buildTable(String name, String charset, List<ColumnDef> list, List<String> pks) {
 		if ( charset == null )
 			charset = getCharset(); // inherit database's default charset
 
 		if ( sensitivity == CustomSchemaCapture.CaseSensitivity.CONVERT_TO_LOWER )
 			name = name.toLowerCase();
 
-		Table t = new Table(this.name, name, charset, list, pks);
-		this.tableList.add(t);
+		CustomTable t = new CustomTable(this.name, name, charset, list, pks);
+
+		this.customTableList.add(t);
 		return t;
 	}
 
-	public Table buildTable(String name, String charset) {
+	public CustomTable buildTable(String name, String charset) {
 		return buildTable(name, charset, new ArrayList<ColumnDef>(), null);
 	}
 

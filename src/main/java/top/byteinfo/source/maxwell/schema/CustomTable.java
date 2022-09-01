@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Table {
+public class CustomTable {
 	public String database;
 	@JsonProperty("table")
 	public String name;
@@ -23,8 +23,8 @@ public class Table {
 	@JsonIgnore
 	public int pkIndex;
 
-	public Table() { }
-	public Table(String database, String name, String charset, List<ColumnDef> list, List<String> pks) {
+	public CustomTable() { }
+	public CustomTable(String database, String name, String charset, List<ColumnDef> list, List<String> pks) {
 		this.database = database.intern();
 		this.name = name.intern();
 		this.charset = charset;
@@ -90,7 +90,7 @@ public class Table {
 		return database;
 	}
 
-	public Table copy() {
+	public CustomTable copy() {
 		ArrayList<ColumnDef> list = new ArrayList<>();
 		ArrayList<String> pkList = new ArrayList<>();
 
@@ -102,14 +102,14 @@ public class Table {
 			pkList.add(s);
 		}
 
-		return new Table(database, name, charset, list, pkList);
+		return new CustomTable(database, name, charset, list, pkList);
 	}
 
 	public void rename(String tableName) {
 		this.name = tableName;
 	}
 
-	private void diffColumnList(List<String> diffs, Table a, Table b, String nameA, String nameB) {
+	private void diffColumnList(List<String> diffs, CustomTable a, CustomTable b, String nameA, String nameB) {
 		for ( ColumnDef column : a.getColumnList() ) {
 			ColumnDef other = b.findColumn(column.getName());
 			if ( other == null )
@@ -192,7 +192,7 @@ public class Table {
 		return "`" + this.database + "`." + this.name + "`";
 	}
 
-	public void diff(List<String> diffs, Table other, String nameA, String nameB) {
+	public void diff(List<String> diffs, CustomTable other, String nameA, String nameB) {
 		if ( !this.getCharset().equals(other.getCharset()) ) {
 			diffs.add(this.fullName() + " differs in charset: "
 					  + nameA + " is " + this.getCharset() + " but "

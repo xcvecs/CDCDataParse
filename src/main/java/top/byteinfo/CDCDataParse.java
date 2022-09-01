@@ -6,7 +6,7 @@ import top.byteinfo.iter.DataParseConfig;
 import top.byteinfo.iter.DataParseContext;
 import top.byteinfo.iter.MaxwellBinlogReplicator;
 import top.byteinfo.iter.connect.BinLogConnector;
-import top.byteinfo.source.maxwell.schema.Schema;
+import top.byteinfo.source.maxwell.schema.CustomSchema;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class CDCDataParse implements Closeable, Runnable {
     private DataParseContext context;
 
 
-    private Schema schema;
+    private CustomSchema customSchema;
 
 
     public CDCDataParse() {
@@ -54,11 +54,6 @@ public class CDCDataParse implements Closeable, Runnable {
         cdcDataParse.run();
         System.out.println("t");
     }
-
-
-    /**
-     *
-     */
 
 
 

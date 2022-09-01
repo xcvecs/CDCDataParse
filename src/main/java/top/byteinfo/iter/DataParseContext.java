@@ -4,7 +4,7 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import top.byteinfo.iter.connect.BinLogConnector;
-import top.byteinfo.source.maxwell.schema.Schema;
+import top.byteinfo.source.maxwell.schema.CustomSchema;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -21,7 +21,7 @@ public class DataParseContext {
     private BinLogConnector binLogConnector;
     private CustomSchemaCapture schemaCapture;
     private MaxwellBinlogReplicator maxwellBinlogReplicator;
-    private Schema schema;
+    private CustomSchema customSchema;
 
 
     public DataParseContext(DataParseConfig dataParseConfig) {
@@ -29,15 +29,10 @@ public class DataParseContext {
         setup();
 
 
+
         parsePre();
     }
 
-    public static void main(String[] args) {
-        long start = System.currentTimeMillis();
-        System.out.println(start);
-
-
-    }
 
     public DataParseConfig getDataParseConfig() {
         return dataParseConfig;
@@ -55,8 +50,8 @@ public class DataParseContext {
         return maxwellBinlogReplicator;
     }
 
-    public Schema getSchema() {
-        return schema;
+    public CustomSchema getSchema() {
+        return customSchema;
     }
 
     public CustomSchemaCapture getSchemaCapture() {
@@ -73,20 +68,12 @@ public class DataParseContext {
 
     public void parsePre() {
         long l1 = dbGlobalLock();
-        schema = dataModelCapture();
+        customSchema = dataModelCapture();
         binLogConnector.run();
         long l2 = dbGlobalUNLock();
-        System.out.println(l2-l1);
+        System.out.println(l2 - l1);
     }
 
-    public void setupSchemaCapture() {
-        try {
-            Connection connection = druidDataSource.getConnection().getConnection();
-            schemaCapture = new CustomSchemaCapture(connection, CONVERT_TO_LOWER);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public void setupDataSource() {
         Properties properties = dataParseConfig.getProperties();
@@ -102,27 +89,42 @@ public class DataParseContext {
         this.druidDataSource = dataSource;
     }
 
+    public void setupSchemaCapture() {
+        try {
+            Connection connection = druidDataSource.getConnection().getConnection();
+            schemaCapture = new CustomSchemaCapture(connection, CONVERT_TO_LOWER);
+            new SchemaCapture(connection,MaxwellMysqlStatus.captureCaseSensitivity(connection));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void setupBinlogConnect() {
         binLogConnector = new BinLogConnector();
         EventDeserializer eventDeserializer = new EventDeserializer();
-        eventDeserializer.setCompatibilityMode(EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG, EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY);
+        eventDeserializer.setCompatibilityMode(
+                EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG,
+                EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY
+        );
         binLogConnector.setEventDeserializer(eventDeserializer);
-        CustomEventListener customEventListener = new CustomEventListener(new LinkedBlockingDeque<>(1 << 20), new LinkedHashMap<>());
+        String capacity = dataParseConfig.getProperties().getProperty("binLogConnector.registerEventListener");
+        CustomEventListener customEventListener = new CustomEventListener(new LinkedBlockingDeque<>(Integer.parseInt(capacity)), new LinkedHashMap<>());
         binLogConnector.registerEventListener(customEventListener);
     }
 
+
     public void setupBinlogReplicator() {
         LinkedBlockingDeque<Event> blockingDeque = binLogConnector.getEventListener().getBlockingDeque();
-        maxwellBinlogReplicator = new MaxwellBinlogReplicator(blockingDeque, schema, schemaCapture);
+        maxwellBinlogReplicator = new MaxwellBinlogReplicator(blockingDeque, customSchema, schemaCapture);
     }
 
-    public Schema dataModelCapture() {
+    public CustomSchema dataModelCapture() {
         try {
-            Schema schema = schemaCapture.capture();
-            List<String> databaseNames = schema.getDatabaseNames();
-            String schemaCharset = schema.getCharset();
+            CustomSchema customSchema = schemaCapture.capture();
+            List<String> databaseNames = customSchema.getDatabaseNames();
+            String schemaCharset = customSchema.getCharset();
 
-            return schema;
+            return customSchema;
         } catch (Exception e) {
             System.out.println(e);
         }

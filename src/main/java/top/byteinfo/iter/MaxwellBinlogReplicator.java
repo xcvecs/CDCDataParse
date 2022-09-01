@@ -3,8 +3,8 @@ package top.byteinfo.iter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.shyiko.mysql.binlog.event.*;
 import lombok.SneakyThrows;
-import top.byteinfo.source.maxwell.schema.Schema;
-import top.byteinfo.source.maxwell.schema.Table;
+import top.byteinfo.source.maxwell.schema.CustomSchema;
+import top.byteinfo.source.maxwell.schema.CustomTable;
 
 import java.io.Serializable;
 import java.util.*;
@@ -19,27 +19,27 @@ import static top.byteinfo.iter.GlobalConstant.BEGIN;
 
 public class MaxwellBinlogReplicator implements Runnable{
 
-    private Schema schema;
+    private CustomSchema customSchema;
    private CustomSchemaCapture schemaCapture;
     private final LinkedBlockingDeque<Event> deque;
     private LinkedList<Event> rowEvent;
 
-    private LinkedHashMap<String, Table> tableCache;
+    private LinkedHashMap<String, CustomTable> tableCache;
     public MaxwellBinlogReplicator(
         LinkedBlockingDeque<Event> deque,
-        Schema schema,
+        CustomSchema customSchema,
         CustomSchemaCapture schemaCapture,
         LinkedList<Event> rowEvent,
-        LinkedHashMap<String, Table> tableCache) {
+        LinkedHashMap<String, CustomTable> tableCache) {
 
         this.deque = deque;
-        this.schema=schema;
+        this.customSchema = customSchema;
         this.schemaCapture = schemaCapture;
         this.rowEvent = rowEvent;
         this.tableCache = tableCache;
     }
-    public MaxwellBinlogReplicator(LinkedBlockingDeque<Event> linkedBlockingDeque,Schema schema,CustomSchemaCapture schemaCapture) {
-        this(linkedBlockingDeque,schema,schemaCapture,new LinkedList<>(),new LinkedHashMap<>());
+    public MaxwellBinlogReplicator(LinkedBlockingDeque<Event> linkedBlockingDeque, CustomSchema customSchema, CustomSchemaCapture schemaCapture) {
+        this(linkedBlockingDeque, customSchema,schemaCapture,new LinkedList<>(),new LinkedHashMap<>());
     }
 
 
