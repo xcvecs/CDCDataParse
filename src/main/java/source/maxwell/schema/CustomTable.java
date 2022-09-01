@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import top.byteinfo.iter.schema.TableColumnList;
 import top.byteinfo.iter.schema.columndef.*;
-import top.byteinfo.source.maxwell.schema.columndef.*;
 
 import java.util.ArrayList;
 import java.util.List;
