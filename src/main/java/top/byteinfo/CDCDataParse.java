@@ -6,7 +6,7 @@ import top.byteinfo.iter.DataParseContext;
 import top.byteinfo.iter.MaxwellBinlogReplicator;
 import top.byteinfo.iter.schema.SchemaCapture;
 import top.byteinfo.iter.connect.BinLogConnector;
-import top.byteinfo.source.maxwell.schema.CustomSchema;
+import source.maxwell.schema.CustomSchema;
 
 import java.io.Closeable;
 import java.io.IOException;

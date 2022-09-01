@@ -1,4 +1,4 @@
-package top.byteinfo.source.maxwell.schema;
+package source.maxwell.schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

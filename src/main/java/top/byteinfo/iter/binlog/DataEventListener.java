@@ -61,7 +61,7 @@ public class DataEventListener implements BinaryLogClient.EventListener {
         if (hashMap.size() == 5) {
             Event event = hashMap.get(TABLE_MAP);
             EventData eventData = event.getData();
-            if (eventData.toString().contains("maxwell")) {
+            if (eventData.toString().contains("source/maxwell")) {
                 hashMap.clear();
                 return;
             } else {

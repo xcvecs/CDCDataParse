@@ -1,4 +1,4 @@
-package top.byteinfo.source.maxwell.schema;
+package source.maxwell.schema;
 
 
 import top.byteinfo.iter.schema.columndef.ColumnDef;
