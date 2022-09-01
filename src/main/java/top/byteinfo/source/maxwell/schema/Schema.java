@@ -127,6 +127,7 @@ public class Schema {
 		return list;
 	}
 
+
 	public static class FullColumnDef {
 		private final Database db;
 		private final Table table;

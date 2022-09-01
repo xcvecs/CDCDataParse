@@ -1,16 +1,12 @@
 package top.byteinfo.iter.connect;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
-import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import top.byteinfo.iter.CustomEventListener;
-import top.byteinfo.iter.MaxwellBinlogReplicator;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.concurrent.LinkedBlockingDeque;
 
-public class BinLogConnector implements Runnable{
+public class BinLogConnector implements Runnable {
 
     private String host;
     private Integer port;
@@ -18,8 +14,10 @@ public class BinLogConnector implements Runnable{
     private String password;
     private BinaryLogClient client;
 
+    private CustomEventListener customEventListener;
+
     public BinLogConnector() {
-        this("localhost",3306,"root","root");
+        this("localhost", 3306, "root", "root");
     }
 
     public BinLogConnector(String host, Integer port, String username, String password) {
@@ -34,10 +32,6 @@ public class BinLogConnector implements Runnable{
     public void run() {
 
 
-
-
-
-
         try {
             client.connect();
         } catch (IOException e) {
@@ -45,13 +39,20 @@ public class BinLogConnector implements Runnable{
         }
     }
 
-    public boolean setEventDeserializer(EventDeserializer eventDeserializer){
+    public boolean setEventDeserializer(EventDeserializer eventDeserializer) {
         client.setEventDeserializer(eventDeserializer);
         return true;
     }
 
-    public boolean registerEventListener(BinaryLogClient.EventListener eventListener){
+    public boolean registerEventListener(CustomEventListener eventListener) {
         client.registerEventListener(eventListener);
+        customEventListener= eventListener;
         return true;
     }
+
+    public CustomEventListener getEventListener() {
+        return customEventListener;
+    }
+
+
 }
