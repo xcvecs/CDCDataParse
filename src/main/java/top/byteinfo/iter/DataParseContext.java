@@ -9,6 +9,7 @@ import top.byteinfo.source.maxwell.schema.Schema;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -22,6 +23,21 @@ public class DataParseContext {
     private MaxwellBinlogReplicator maxwellBinlogReplicator;
     private Schema schema;
 
+
+    public DataParseContext(DataParseConfig dataParseConfig) {
+        this.dataParseConfig = dataParseConfig;
+        setup();
+
+
+        parsePre();
+    }
+
+    public static void main(String[] args) {
+        long start = System.currentTimeMillis();
+        System.out.println(start);
+
+
+    }
 
     public DataParseConfig getDataParseConfig() {
         return dataParseConfig;
@@ -47,17 +63,20 @@ public class DataParseContext {
         return schemaCapture;
     }
 
-     public DataParseContext(DataParseConfig dataParseConfig) {
-        this.dataParseConfig = dataParseConfig;
-        setup();
-    }
-
     public void setup() {
         setupDataSource();
         setupSchemaCapture();
         setupBinlogConnect();
         setupBinlogReplicator();
 
+    }
+
+    public void parsePre() {
+        long l1 = dbGlobalLock();
+        schema = dataModelCapture();
+        binLogConnector.run();
+        long l2 = dbGlobalUNLock();
+        System.out.println(l2-l1);
     }
 
     public void setupSchemaCapture() {
@@ -92,8 +111,33 @@ public class DataParseContext {
         binLogConnector.registerEventListener(customEventListener);
     }
 
-    public void setupBinlogReplicator(){
+    public void setupBinlogReplicator() {
         LinkedBlockingDeque<Event> blockingDeque = binLogConnector.getEventListener().getBlockingDeque();
         maxwellBinlogReplicator = new MaxwellBinlogReplicator(blockingDeque, schema, schemaCapture);
+    }
+
+    public Schema dataModelCapture() {
+        try {
+            Schema schema = schemaCapture.capture();
+            List<String> databaseNames = schema.getDatabaseNames();
+            String schemaCharset = schema.getCharset();
+
+            return schema;
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        throw new NullPointerException("");
+    }
+
+    public long dbGlobalLock() {
+        long start = System.currentTimeMillis();
+        System.out.println(start);
+        return start;
+    }
+
+    public long dbGlobalUNLock() {
+        long end = System.currentTimeMillis();
+        System.out.println(end);
+        return end;
     }
 }

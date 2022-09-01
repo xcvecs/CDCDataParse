@@ -59,17 +59,7 @@ public class CDCDataParse implements Closeable, Runnable {
     /**
      *
      */
-    public Schema dataModelCapture() {
-        try {
-//            CustomSchemaCapture schemaCapture = context.getSchemaCapture();
-            Schema schema = schemaCapture.capture();
-            return schema;
-        } catch (Exception e) {
-            System.out.println(e);
-        }
 
-        return null;
-    }
 
 
     @Override
@@ -77,22 +67,22 @@ public class CDCDataParse implements Closeable, Runnable {
         /**
          *
          */
-        schema = dataModelCapture();
+//        schema = dataModelCapture();
 
 
         /**
          * 全局锁。
          */
-        dbGlobalLock();
-        long start = System.currentTimeMillis();
-        System.out.println("start:" + start);
-        System.out.println();
-        executorService.submit(binLogConnector);// todo 添加标志位
-        dataModelCapture();// todo 添加标志位
-        long end = System.currentTimeMillis();
-        System.out.println(end - start);
-        System.out.println("end:" + end);
-        dbGlobalUNLock();
+//        dbGlobalLock();
+//        long start = System.currentTimeMillis();
+//        System.out.println("start:" + start);
+//        System.out.println();
+//        executorService.submit(binLogConnector);// todo 添加标志位
+////        schema = dataModelCapture();// todo 添加标志位
+//        long end = System.currentTimeMillis();
+//        System.out.println(end - start);
+//        System.out.println("end:" + end);
+////        dbGlobalUNLock();
 
         /**
          * parse data
@@ -100,13 +90,7 @@ public class CDCDataParse implements Closeable, Runnable {
         executorService.submit(maxwellBinlogReplicator);
     }
 
-    public void dbGlobalLock() {
 
-    }
-
-    public void dbGlobalUNLock() {
-
-    }
 
     @Override
     public void close() throws IOException {

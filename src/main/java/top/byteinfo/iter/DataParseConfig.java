@@ -23,6 +23,8 @@ public class DataParseConfig {
         properties.setProperty("dataSource.setMaxWait", "3000");
     }
 
+
+
     public Properties getProperties() {
         return properties;
     }
