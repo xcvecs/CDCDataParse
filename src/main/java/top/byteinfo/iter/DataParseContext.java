@@ -4,7 +4,7 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import top.byteinfo.iter.connect.BinLogConnector;
-import top.byteinfo.source.maxwell.schema.CustomSchema;
+import top.byteinfo.iter.schema.Schema;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,21 +13,18 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import static top.byteinfo.iter.CustomSchemaCapture.CaseSensitivity.CONVERT_TO_LOWER;
-
 public class DataParseContext {
     private final DataParseConfig dataParseConfig;
     private DruidDataSource druidDataSource;
     private BinLogConnector binLogConnector;
-    private CustomSchemaCapture schemaCapture;
+    private SchemaCapture schemaCapture;
     private MaxwellBinlogReplicator maxwellBinlogReplicator;
-    private CustomSchema customSchema;
+    private Schema schema;
 
 
     public DataParseContext(DataParseConfig dataParseConfig) {
         this.dataParseConfig = dataParseConfig;
         setup();
-
 
 
         parsePre();
@@ -50,11 +47,11 @@ public class DataParseContext {
         return maxwellBinlogReplicator;
     }
 
-    public CustomSchema getSchema() {
-        return customSchema;
+    public Schema getSchema() {
+        return schema;
     }
 
-    public CustomSchemaCapture getSchemaCapture() {
+    public SchemaCapture getSchemaCapture() {
         return schemaCapture;
     }
 
@@ -68,7 +65,7 @@ public class DataParseContext {
 
     public void parsePre() {
         long l1 = dbGlobalLock();
-        customSchema = dataModelCapture();
+        schema = dataModelCapture();
         binLogConnector.run();
         long l2 = dbGlobalUNLock();
         System.out.println(l2 - l1);
@@ -92,8 +89,13 @@ public class DataParseContext {
     public void setupSchemaCapture() {
         try {
             Connection connection = druidDataSource.getConnection().getConnection();
-            schemaCapture = new CustomSchemaCapture(connection, CONVERT_TO_LOWER);
-            new SchemaCapture(connection,MaxwellMysqlStatus.captureCaseSensitivity(connection));
+//            schemaCapture = new CustomSchemaCapture(connection, CONVERT_TO_LOWER);
+            SchemaCapture capture = new SchemaCapture(connection, DataBaseServerStatus.MaxwellMysqlStatus.captureCaseSensitivity(connection));
+            this.schemaCapture = capture;
+
+            Schema schema = capture.capture();
+            System.out.println();
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -108,23 +110,23 @@ public class DataParseContext {
         );
         binLogConnector.setEventDeserializer(eventDeserializer);
         String capacity = dataParseConfig.getProperties().getProperty("binLogConnector.registerEventListener");
-        CustomEventListener customEventListener = new CustomEventListener(new LinkedBlockingDeque<>(Integer.parseInt(capacity)), new LinkedHashMap<>());
-        binLogConnector.registerEventListener(customEventListener);
+        DataEventListener dataEventListener = new DataEventListener(new LinkedBlockingDeque<>(Integer.parseInt(capacity)), new LinkedHashMap<>());
+        binLogConnector.registerEventListener(dataEventListener);
     }
 
 
     public void setupBinlogReplicator() {
         LinkedBlockingDeque<Event> blockingDeque = binLogConnector.getEventListener().getBlockingDeque();
-        maxwellBinlogReplicator = new MaxwellBinlogReplicator(blockingDeque, customSchema, schemaCapture);
+        maxwellBinlogReplicator = new MaxwellBinlogReplicator(blockingDeque, schema, schemaCapture);
     }
 
-    public CustomSchema dataModelCapture() {
+    public Schema dataModelCapture() {
         try {
-            CustomSchema customSchema = schemaCapture.capture();
-            List<String> databaseNames = customSchema.getDatabaseNames();
-            String schemaCharset = customSchema.getCharset();
+            Schema schema = schemaCapture.capture();
+            List<String> databaseNames = this.schema.getDatabaseNames();
+            String schemaCharset = this.schema.getCharset();
 
-            return customSchema;
+            return this.schema;
         } catch (Exception e) {
             System.out.println(e);
         }

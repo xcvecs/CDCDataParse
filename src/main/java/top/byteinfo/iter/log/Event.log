@@ -1,0 +1,19 @@
+Aug 29, 2022 8:43:05 PM com.github.shyiko.mysql.binlog.BinaryLogClient connect
+INFO: Connected to localhost:3306 at EXE-bin.000010/1790457 (sid:65535, cid:1184)
+
+INFO: Event{header=EventHeaderV4{timestamp=0, eventType=ROTATE, serverId=1, headerLength=19, dataLength=26, nextPosition=0, flags=32}, data=RotateEventData{binlogFilename='EXE-bin.000010', binlogPosition=1790457}}
+INFO: Event{header=EventHeaderV4{timestamp=1661330997000, eventType=FORMAT_DESCRIPTION, serverId=1, headerLength=19, dataLength=103, nextPosition=0, flags=0}, data=FormatDescriptionEventData{binlogVersion=4, serverVersion='8.0.30', headerLength=19, dataLength=98, checksumType=CRC32}}
+
+DML
+Event{header=EventHeaderV4{timestamp=1661778085000, eventType=ANONYMOUS_GTID, serverId=1, headerLength=19, dataLength=60, nextPosition=1801340, flags=0}, data=null}
+Event{header=EventHeaderV4{timestamp=1661778085000, eventType=QUERY, serverId=1, headerLength=19, dataLength=62, nextPosition=1801421, flags=8}, data=QueryEventData{threadId=1185, executionTime=0, errorCode=0, database='new_schema', sql='BEGIN'}}
+Event{header=EventHeaderV4{timestamp=1661778085000, eventType=TABLE_MAP, serverId=1, headerLength=19, dataLength=42, nextPosition=1801482, flags=0}, data=TableMapEventData{tableId=237, database='new_schema', table='new_table', columnTypes=3, columnMetadata=0, columnNullability={}, eventMetadata=TableMapEventMetadata{signedness={}, defaultCharset=null, columnCharsets=null, columnNames=null, setStrValues=null, enumStrValues=null, geometryTypes=null, simplePrimaryKeys=null, primaryKeysWithPrefix=null, enumAndSetDefaultCharset=null, enumAndSetColumnCharsets=null,visibility=null}}}
+Event{header=EventHeaderV4{timestamp=1661778085000, eventType=EXT_DELETE_ROWS, serverId=1, headerLength=19, dataLength=21, nextPosition=1801522, flags=0}, data=DeleteRowsEventData{tableId=237, includedColumns={0}, rows=[
+    [11]
+]}}
+Event{header=EventHeaderV4{timestamp=1661778085000, eventType=XID, serverId=1, headerLength=19, dataLength=12, nextPosition=1801553, flags=0}, data=XidEventData{xid=67854}}
+
+DDL
+Event{header=EventHeaderV4{timestamp=1661778233000, eventType=ANONYMOUS_GTID, serverId=1, headerLength=19, dataLength=60, nextPosition=1801632, flags=0}, data=null}
+Event{header=EventHeaderV4{timestamp=1661778233000, eventType=QUERY, serverId=1, headerLength=19, dataLength=181, nextPosition=1801832, flags=0}, data=QueryEventData{threadId=1185, executionTime=0, errorCode=0, database='new_schema', sql='Alter table `new_schema`.`new_table`
+	add column `idString` varchar(32) NULL after `idnew_table`'}}

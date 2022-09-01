@@ -1,5 +1,7 @@
 package top.byteinfo.iter.schema;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class Schema {
@@ -14,5 +16,19 @@ public class Schema {
 
     }
 
+    public Map<String, DataBase> getDbMap() {
+        return dbMap;
+    }
 
+    public String getCharset() {
+        return charset;
+    }
+
+    public ServerCaseSensitivity getSensitivity() {
+        return sensitivity;
+    }
+
+    public List<String> getDatabaseNames() {
+       return new ArrayList<>(getDbMap().keySet());
+    }
 }

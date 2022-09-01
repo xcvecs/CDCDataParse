@@ -1,70 +1,162 @@
 package top.byteinfo.iter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.shyiko.mysql.binlog.event.*;
-import lombok.SneakyThrows;
-import top.byteinfo.source.maxwell.schema.CustomSchema;
-import top.byteinfo.source.maxwell.schema.CustomTable;
+import com.github.shyiko.mysql.binlog.event.Event;
+import com.github.shyiko.mysql.binlog.event.EventType;
+import com.github.shyiko.mysql.binlog.event.QueryEventData;
+import top.byteinfo.iter.binlog.DataEvent;
+import top.byteinfo.iter.schema.Schema;
+import top.byteinfo.iter.schema.Table;
 
-import java.io.Serializable;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
-import static com.github.shyiko.mysql.binlog.event.EventType.EXT_WRITE_ROWS;
-import static com.github.shyiko.mysql.binlog.event.EventType.TABLE_MAP;
-import static top.byteinfo.iter.GlobalConstant.BEGIN;
+import static com.github.shyiko.mysql.binlog.event.EventType.*;
 
-public class MaxwellBinlogReplicator implements Runnable{
+public class MaxwellBinlogReplicator implements Runnable {
 
-    private CustomSchema customSchema;
-   private CustomSchemaCapture schemaCapture;
     private final LinkedBlockingDeque<Event> deque;
-    private LinkedList<Event> rowEvent;
+    private final LinkedBlockingDeque<DataEvent> dataEvents;
+    private final LinkedList<Event> rowEventList;
+    private Schema schema;
+    private SchemaCapture schemaCapture;
 
-    private LinkedHashMap<String, CustomTable> tableCache;
+
+    private LinkedHashMap<String, Table> tableCache;
+
     public MaxwellBinlogReplicator(
-        LinkedBlockingDeque<Event> deque,
-        CustomSchema customSchema,
-        CustomSchemaCapture schemaCapture,
-        LinkedList<Event> rowEvent,
-        LinkedHashMap<String, CustomTable> tableCache) {
+            LinkedBlockingDeque<Event> deque,
+            Schema schema,
+            SchemaCapture schemaCapture,
+            LinkedList<Event> rowEvent,
+            LinkedHashMap<String, Table> tableCache) {
 
         this.deque = deque;
-        this.customSchema = customSchema;
+        this.schema = schema;
         this.schemaCapture = schemaCapture;
-        this.rowEvent = rowEvent;
+        this.rowEventList = rowEvent;
         this.tableCache = tableCache;
-    }
-    public MaxwellBinlogReplicator(LinkedBlockingDeque<Event> linkedBlockingDeque, CustomSchema customSchema, CustomSchemaCapture schemaCapture) {
-        this(linkedBlockingDeque, customSchema,schemaCapture,new LinkedList<>(),new LinkedHashMap<>());
+        this.dataEvents = new LinkedBlockingDeque<>();
     }
 
+    public MaxwellBinlogReplicator(LinkedBlockingDeque<Event> linkedBlockingDeque, Schema schema, SchemaCapture schemaCapture) {
+        this(linkedBlockingDeque, schema, schemaCapture, new LinkedList<>(), new LinkedHashMap<>());
+    }
 
 
-    public void work()  {
-//        RowMap row = null;
-//        try {
+    protected Event pollEvent() {
+        try {
+            return deque.poll(100, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    /**
+     * 1.挨个读取 序列。
+     * 2.
+     *
+
+     */
+    public void route() {
+        boolean eventFormat = false;
+        boolean binlogValid = false;
+        boolean parseFlag = false;
+
+
+        int routCount = 0;
+        /**
+         * todo
+         */
+        LinkedList<Event> eventTemp = new LinkedList<>();
+
+        while (true) {
+            if (!eventFormat) {
+                Event event = pollEvent();
+                EventType eventType = event.getHeader().getEventType();
+                if (eventType.equals(ROTATE)) {
+                    binlogValid = true;
+                }
+                Event event1 = pollEvent();
+                if (event1.getHeader().getEventType().equals(FORMAT_DESCRIPTION)) {
+                    parseFlag = true;
+                }
+
+                if (binlogValid && parseFlag) {
+                    eventFormat = true;
+                } else {
+                    throw new RuntimeException();
+                }
+            }
+            Event event = pollEvent();
+            EventType eventType = event.getHeader().getEventType();
+            if (eventTemp.size() != 0 && routCount == 0) {
+                switch (eventTemp.size()) {
+                    case 2:
+                        DataEvent ddlDataEvent = new DataEvent(DataEvent.DataEventType.DDL, eventTemp);
+                        dataEvents.add(ddlDataEvent);
+
+                        break;
+                    case 5:
+                        DataEvent dmlDataEvent = new DataEvent(DataEvent.DataEventType.DML, eventTemp);
+                        dataEvents.add(dmlDataEvent);
+                        break;
+                    default:
+                        break;
+                }
+
+            }
+
+
+            if (eventType.equals(ANONYMOUS_GTID)) {
+                if (routCount != 0) throw new RuntimeException("");
+                eventTemp.add(event);
+                routCount++;
+            }
+
+
+            if (eventType.equals(QUERY)) {
+                eventTemp.add(event);
+                QueryEventData eventData = event.getData();//read .....
+                if (!eventData.getSql().equals("BEGIN")) {
+                    routCount = 0;
+                }
+            }
+            if (eventType.equals(XID)) {
+                eventTemp.add(event);
+                routCount = 0;
+                continue;
+            }
+
+            if (routCount == 0) continue;
+            eventTemp.add(event);
+
+
+        }
+
+    }
+
+    public void parseEventData(){
+        Executors.newSingleThreadExecutor().submit(this::route);
+
+
+    }
+
+    public boolean binlogCheck() {
+        return true;
+    }
+
+
+    /*public void work() {
+
         Event row = getRawEvent();
-//        } catch ( InterruptedException e ) {
-//        }
-//
-//        if ( row == null )
-//            return;
-//
-//        rowCounter.inc();
-//        rowMeter.mark();
-//
-//        if ( scripting != null && !isMaxwellRow(row))
-//            scripting.invoke(row);
-//
-//        processRow(row);
-    }
 
-    //handler event
-    public Event getRawEvent() {
+    }*/
+
+    /*public Event getRawEvent() {
 
         Event event = null;
 
@@ -77,10 +169,7 @@ public class MaxwellBinlogReplicator implements Runnable{
             }
 
 
-            if (rowEvent != null && !rowEvent.isEmpty()) {
-                Event row = rowEvent.removeFirst();
-                return row;
-            }
+
 
             switch (event.getHeader().getEventType()) {
                 case WRITE_ROWS:
@@ -89,11 +178,7 @@ public class MaxwellBinlogReplicator implements Runnable{
                 case EXT_UPDATE_ROWS:
                 case DELETE_ROWS:
                 case EXT_DELETE_ROWS:
-//                LOGGER.warn("Started replication stream inside a transaction.  This shouldn't normally happen.");
-//                LOGGER.warn("Assuming new transaction at unexpected event:" + event);
-//
-//                queue.offerFirst(event);
-//                rowBuffer = getTransactionRows(event);
+
                     break;
                 case TABLE_MAP:
                     TableMapEventData tableMapEventData = event.getData();
@@ -104,7 +189,6 @@ public class MaxwellBinlogReplicator implements Runnable{
                 case QUERY:
                     QueryEventData eventData = event.getData();
                     if (eventData.getSql().equals(BEGIN.name())) {
-                        rowEvent = getTransactionRowEvents(event);
                     } else {
                         processQueryRawEvent(event);
                     }
@@ -113,7 +197,6 @@ public class MaxwellBinlogReplicator implements Runnable{
                     System.out.println();
                     break;
                 case ROTATE:
-//                tableCache.clear();
                     System.out.println("");
                     break;
                 default:
@@ -122,9 +205,9 @@ public class MaxwellBinlogReplicator implements Runnable{
             }
 
         }
-    }
+    }*/
 
-    private Event ensureReplicatorThread() {
+    /*private Event ensureReplicatorThread() {
         // TODO
         Event event = null;
         int timeCount = 0;
@@ -138,18 +221,14 @@ public class MaxwellBinlogReplicator implements Runnable{
             event = pollEvent();
         }
         return event;
-    }
+    }*/
 
-    private void processEvent(TableMapEventData tableMapEventData) {
+   /* private void processEvent(TableMapEventData tableMapEventData) {
 
 
-//        Table tableInfo = new Table(tableMapEventData);
-//
-//        tableCache.put(tableInfo.getTableId(), tableInfo);
-    }
+    }*/
 
-    private LinkedList<Event> getTransactionRowEvents(Event event) {
-//        Event event1;
+    /*private LinkedList<Event> getTransactionRowEvents(Event event) {
 
         while (true) {
 //            event = pollEvent();
@@ -159,7 +238,7 @@ public class MaxwellBinlogReplicator implements Runnable{
 
             EventType eventType = event.getHeader().getEventType();
             if (eventType == EventType.XID) {//
-                return rowEvent;
+//                return rowEvent;
             }
 
             switch (eventType) {
@@ -174,7 +253,7 @@ public class MaxwellBinlogReplicator implements Runnable{
                 case EXT_WRITE_ROWS:
                 case EXT_UPDATE_ROWS:
                 case EXT_DELETE_ROWS:
-                    rowEvent.add(event);
+//                    rowEvent.add(event);
                     break;
 
 
@@ -212,25 +291,16 @@ public class MaxwellBinlogReplicator implements Runnable{
 
         }
 
-    }
+    }*/
 
 
-    private void processQueryRawEvent(Event event) {
+    /*private void processQueryRawEvent(Event event) {
 
-        rowEvent.add(event);
-    }
-
-
-    protected Event pollEvent() {
-        try {
-            return deque.poll(100, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//        rowEvent.add(event);
+    }*/
 
 
-    public void handlerEvents(Collection<Event> collection) {
+    /*public void handlerEvents(Collection<Event> collection) {
 
         Iterator<Event> eventIterator = collection.iterator();
 
@@ -244,10 +314,9 @@ public class MaxwellBinlogReplicator implements Runnable{
 
 
         }
-    }
+    }*/
 
-    @SneakyThrows
-    public boolean eventHandler(Event event) {
+    /*public boolean eventHandler(Event event) {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -291,10 +360,9 @@ public class MaxwellBinlogReplicator implements Runnable{
             List list = new ArrayList<>();
         }
         return true;
-    }
+    }*/
 
     @Override
     public void run() {
-        work();
     }
 }

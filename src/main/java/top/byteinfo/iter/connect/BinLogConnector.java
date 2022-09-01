@@ -2,7 +2,7 @@ package top.byteinfo.iter.connect;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
-import top.byteinfo.iter.CustomEventListener;
+import top.byteinfo.iter.DataEventListener;
 
 import java.io.IOException;
 
@@ -14,7 +14,7 @@ public class BinLogConnector implements Runnable {
     private String password;
     private BinaryLogClient client;
 
-    private CustomEventListener customEventListener;
+    private DataEventListener dataEventListener;
 
     public BinLogConnector() {
         this("localhost", 3306, "root", "root");
@@ -44,14 +44,14 @@ public class BinLogConnector implements Runnable {
         return true;
     }
 
-    public boolean registerEventListener(CustomEventListener eventListener) {
+    public boolean registerEventListener(DataEventListener eventListener) {
         client.registerEventListener(eventListener);
-        customEventListener= eventListener;
+        dataEventListener = eventListener;
         return true;
     }
 
-    public CustomEventListener getEventListener() {
-        return customEventListener;
+    public DataEventListener getEventListener() {
+        return dataEventListener;
     }
 
 

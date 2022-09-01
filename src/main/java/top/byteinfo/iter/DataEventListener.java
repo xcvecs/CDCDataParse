@@ -13,16 +13,15 @@ import java.util.logging.Logger;
 
 import static com.github.shyiko.mysql.binlog.event.EventType.*;
 
-public class CustomEventListener implements BinaryLogClient.EventListener {
-    private static final Logger logger = Logger.getLogger(CustomEventListener.class.getName());
-    public CustomEventListener(LinkedBlockingDeque<Event> blockingDeque, HashMap<EventType, Event> hashMap) {
+public class DataEventListener implements BinaryLogClient.EventListener {
+    private static final Logger logger = Logger.getLogger(DataEventListener.class.getName());
+    public DataEventListener(LinkedBlockingDeque<Event> blockingDeque, HashMap<EventType, Event> hashMap) {
         this.blockingDeque = blockingDeque;
         this.hashMap = hashMap;
     }
 
     LinkedBlockingDeque<Event> blockingDeque;
     HashMap<EventType, Event> hashMap;//
-
 
     @Override
     public void onEvent(Event event) {

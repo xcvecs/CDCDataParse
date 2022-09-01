@@ -1,4 +1,4 @@
-package top.byteinfo.source.maxwell.schema;
+package top.byteinfo.iter.schema;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

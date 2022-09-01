@@ -1,10 +1,10 @@
 package top.byteinfo;
 
 
-import top.byteinfo.iter.CustomSchemaCapture;
 import top.byteinfo.iter.DataParseConfig;
 import top.byteinfo.iter.DataParseContext;
 import top.byteinfo.iter.MaxwellBinlogReplicator;
+import top.byteinfo.iter.SchemaCapture;
 import top.byteinfo.iter.connect.BinLogConnector;
 import top.byteinfo.source.maxwell.schema.CustomSchema;
 
@@ -21,7 +21,7 @@ public class CDCDataParse implements Closeable, Runnable {
 
 
     private final BinLogConnector binLogConnector;
-    private final CustomSchemaCapture schemaCapture;
+    private final SchemaCapture schemaCapture;
     private final MaxwellBinlogReplicator maxwellBinlogReplicator;
 
     private DataParseContext context;

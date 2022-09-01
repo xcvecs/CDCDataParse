@@ -1,9 +1,6 @@
-package top.byteinfo.iter;
+package top.byteinfo.source.maxwell.schema;
 
 import org.apache.commons.lang3.StringUtils;
-import top.byteinfo.source.maxwell.schema.CustomDatabase;
-import top.byteinfo.source.maxwell.schema.CustomTable;
-import top.byteinfo.source.maxwell.schema.CustomSchema;
 import top.byteinfo.source.maxwell.schema.columndef.ColumnDef;
 
 import java.sql.*;

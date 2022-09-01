@@ -9,12 +9,17 @@ public class DataBase {
 
     private final String name;
     private final List<Table> tableList;
-    private String charset;
+    private final String charset;
     private ServerCaseSensitivity sensitivity;
+
+
+    public List<Table> getTableList() {
+        return tableList;
+    }
 
     public DataBase(String name, String charset, List<Table> tableList, ServerCaseSensitivity sensitivity) {
         this.name = name;
-        this.tableList = tableList;
+        this.tableList = new ArrayList<>();
         this.charset = charset;
         this.sensitivity = sensitivity;
     }
@@ -24,11 +29,11 @@ public class DataBase {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public Table buildTable(String tableName, String characterSetName) {
-        return buildTable(tableName, charset, new ArrayList<ColumnDef>(), null);
+        return buildTable(tableName, characterSetName, new ArrayList<ColumnDef>(), null);
 
     }
 
@@ -46,13 +51,9 @@ public class DataBase {
         this.tableList.add(t);
         return t;
     }
+
     public String getCharset() {
-        if ( charset == null ) {
-            // TODO: return server-default charset
-            return "";
-        } else {
-            return charset;
-        }
+        return this.charset;
     }
 
 }
