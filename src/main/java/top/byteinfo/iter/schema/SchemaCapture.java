@@ -1,7 +1,6 @@
 package top.byteinfo.iter.schema;
 
 import org.apache.commons.lang3.StringUtils;
-import source.maxwell.schema.CustomDatabase;
 import top.byteinfo.iter.schema.columndef.ColumnDef;
 
 import java.sql.*;
@@ -33,53 +32,53 @@ public class SchemaCapture {
     private final PreparedStatement columnPreparedStatement;
     private final PreparedStatement pkPreparedStatement;
     String dbCaptureQuery_old = "SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME";
-    String dbCaptureQuery = """
-            SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME
-            """;
+//    String dbCaptureQuery = """
+//            SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME
+//            """;
     String tblSql_old = "SELECT TABLES.TABLE_NAME, CCSA.CHARACTER_SET_NAME " + "FROM INFORMATION_SCHEMA.TABLES " + "JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY AS CCSA" + " ON TABLES.TABLE_COLLATION = CCSA.COLLATION_NAME WHERE TABLES.TABLE_SCHEMA = ? ";
-    String tblSql = """
-            SELECT
-                TABLES.TABLE_NAME,
-                CCSA.CHARACTER_SET_NAME
-            FROM
-                INFORMATION_SCHEMA.TABLES
-                JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY AS CCSA ON TABLES.TABLE_COLLATION = CCSA.COLLATION_NAME
-            WHERE TABLES.TABLE_SCHEMA = ?
-            """;
+//    String tblSql = """
+//            SELECT
+//                TABLES.TABLE_NAME,
+//                CCSA.CHARACTER_SET_NAME
+//            FROM
+//                INFORMATION_SCHEMA.TABLES
+//                JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY AS CCSA ON TABLES.TABLE_COLLATION = CCSA.COLLATION_NAME
+//            WHERE TABLES.TABLE_SCHEMA = ?
+//            """;
     String columnSql_old = "SELECT " + "TABLE_NAME," + "COLUMN_NAME, " + "DATA_TYPE, " + "CHARACTER_SET_NAME, " + "ORDINAL_POSITION, " + "COLUMN_TYPE, " + "DATETIME_PRECISION, " + "COLUMN_KEY " + "FROM `information_schema`.`COLUMNS` WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME, ORDINAL_POSITION";
-    String columnSql = """
-            SELECT 
-            TABLE_NAME,
-            COLUMN_NAME, 
-            DATA_TYPE,
-            CHARACTER_SET_NAME,
-            ORDINAL_POSITION, 
-            COLUMN_TYPE, 
-            DATETIME_PRECISION, 
-            COLUMN_KEY 
-            FROM `information_schema`.`COLUMNS` WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME, ORDINAL_POSITION
-            """;
+//    String columnSql = """
+//            SELECT
+//            TABLE_NAME,
+//            COLUMN_NAME,
+//            DATA_TYPE,
+//            CHARACTER_SET_NAME,
+//            ORDINAL_POSITION,
+//            COLUMN_TYPE,
+//            DATETIME_PRECISION,
+//            COLUMN_KEY
+//            FROM `information_schema`.`COLUMNS` WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME, ORDINAL_POSITION
+//            """;
     String pkSQl_old = "SELECT " + "TABLE_NAME, " + "COLUMN_NAME, " + "ORDINAL_POSITION " + "FROM information_schema.KEY_COLUMN_USAGE " + "WHERE CONSTRAINT_NAME = 'PRIMARY' AND TABLE_SCHEMA = ? " + "ORDER BY TABLE_NAME, ORDINAL_POSITION";
-    String pkSQl = """
-            SELECT
-            TABLE_NAME,
-            COLUMN_NAME,
-            ORDINAL_POSITION
-            FROM information_schema.KEY_COLUMN_USAGE 
-            WHERE CONSTRAINT_NAME = 'PRIMARY' AND TABLE_SCHEMA = ?
-            ORDER BY TABLE_NAME, ORDINAL_POSITION             
-            """;
+//    String pkSQl = """
+//            SELECT
+//            TABLE_NAME,
+//            COLUMN_NAME,
+//            ORDINAL_POSITION
+//            FROM information_schema.KEY_COLUMN_USAGE
+//            WHERE CONSTRAINT_NAME = 'PRIMARY' AND TABLE_SCHEMA = ?
+//            ORDER BY TABLE_NAME, ORDINAL_POSITION
+//            """;
 
     public SchemaCapture(Connection connection, ServerCaseSensitivity caseSensitivity) {
 //        this.druidPooledConnection = connection;
         this.sensitivity = caseSensitivity;
         this.connection = connection;
         try {
-            dbPreparedStatement = connection.prepareStatement(dbCaptureQuery);
+            dbPreparedStatement = connection.prepareStatement(dbCaptureQuery_old);
 
-            tablePreparedStatement = connection.prepareStatement(tblSql);
-            columnPreparedStatement = connection.prepareStatement(columnSql);
-            pkPreparedStatement = connection.prepareStatement(pkSQl);
+            tablePreparedStatement = connection.prepareStatement(tblSql_old);
+            columnPreparedStatement = connection.prepareStatement(columnSql_old);
+            pkPreparedStatement = connection.prepareStatement(pkSQl_old);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -91,7 +90,7 @@ public class SchemaCapture {
 
     public Schema capture() {
 
-        List<CustomDatabase> customDatabaseList = new ArrayList<>();
+        List<DataBase> customDatabaseList = new ArrayList<>();
 
         List<DataBase> dbList = new ArrayList<>();
 
@@ -108,8 +107,7 @@ public class SchemaCapture {
                 DataBase dataBase = new DataBase(dbName, dbCharset, this.sensitivity);
                 dbList.add(dataBase);
 
-                CustomDatabase db = new CustomDatabase(dbName, dbCharset);
-                customDatabaseList.add(db);
+
             }
 
             String charset = captureDefaultCharset();
@@ -291,7 +289,7 @@ public class SchemaCapture {
         return result.toArray(new String[0]);
     }
 
-    public class Sql {
+    public static class Sql {
         public static String inListSQL(int count) {
             return "(" + StringUtils.repeat("?", ", ", count) + ")";
         }

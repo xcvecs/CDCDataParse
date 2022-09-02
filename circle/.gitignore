@@ -1,18 +1,8 @@
+target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-!*.md
-target/
 
-!**/**/.md
-!**/**/pom.xml
-!**/**/src/main/**
-
-**/mvnw
-**/mvnw.cmd
-**/.mvn/**/**
-**/src/main/**/target/
-**/src/test/**/target/
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
@@ -46,6 +36,3 @@ build/
 
 ### Mac OS ###
 .DS_Store
-/.mvn/
-/.idea/
-/CircleTest/.mvn/

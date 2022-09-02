@@ -2,19 +2,13 @@ package top.byteinfo.iter.binlog;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
 import com.github.shyiko.mysql.binlog.event.Event;
-import com.github.shyiko.mysql.binlog.event.EventData;
 import com.github.shyiko.mysql.binlog.event.EventType;
-import com.github.shyiko.mysql.binlog.event.QueryEventData;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.logging.Logger;
-
-import static com.github.shyiko.mysql.binlog.event.EventType.*;
-
+@Slf4j
 public class DataEventListener implements BinaryLogClient.EventListener {
-    private static final Logger logger = Logger.getLogger(DataEventListener.class.getName());
     public DataEventListener(LinkedBlockingDeque<Event> blockingDeque, HashMap<EventType, Event> hashMap) {
         this.blockingDeque = blockingDeque;
         this.hashMap = hashMap;
@@ -32,10 +26,10 @@ public class DataEventListener implements BinaryLogClient.EventListener {
 //        }
 //        System.out.println(event);
 
-        logger.info(event.toString());
+        log.info(event.getHeader().getEventType().name());
         blockingDeque.add(event);
-        hashMap.put(event.getHeader().getEventType(), event);
-        determine(hashMap);
+//        hashMap.put(event.getHeader().getEventType(), event);
+//        determine(hashMap);
 
     }
 
@@ -43,7 +37,7 @@ public class DataEventListener implements BinaryLogClient.EventListener {
         return blockingDeque;
     }
 
-    void determine(HashMap<EventType, Event> hashMap) {
+    /*void determine(HashMap<EventType, Event> hashMap) {
         if (hashMap.containsKey(ROTATE) || hashMap.containsKey(FORMAT_DESCRIPTION)) {
             hashMap.clear();
         }
@@ -75,6 +69,6 @@ public class DataEventListener implements BinaryLogClient.EventListener {
             System.out.println("e@e@e");
             hashMap.clear();
         }
-    }
+    }*/
 
 }

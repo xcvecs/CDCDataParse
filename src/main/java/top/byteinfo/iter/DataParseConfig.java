@@ -20,7 +20,8 @@ public class DataParseConfig {
         properties.setProperty("dataSource.setDriverClassName", "com.mysql.cj.jdbc.Driver");
         properties.setProperty("dataSource.setUsername", "root");
         properties.setProperty("dataSource.setPassword", "root");
-        properties.setProperty("dataSource.setUrl", "jdbc:mysql://localhost?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC");
+        properties.setProperty("dataSource.setJdbcUrl", "jdbc:mysql://localhost?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC");
+
         properties.setProperty("dataSource.setInitialSize", "5");
         properties.setProperty("dataSource.setMaxActive", "10");
         properties.setProperty("dataSource.setMinIdle", "3");
