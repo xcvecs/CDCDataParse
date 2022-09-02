@@ -16,6 +16,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.shyiko.mysql.binlog.event.EventType.*;
+import static top.byteinfo.iter.binlog.DataEvent.DataEventType.DDL;
+import static top.byteinfo.iter.binlog.DataEvent.DataEventType.generateType;
 
 @Slf4j
 public class MaxwellBinlogReplicator implements Runnable {
@@ -94,12 +96,13 @@ public class MaxwellBinlogReplicator implements Runnable {
                 }
             }
             if (eventTemp.size() != 0 && routCount == 0) {
-                switch (eventTemp.size()) {
-                    case 2:
-                        DataEvent ddlDataEvent = new DataEvent(DataEvent.DataEventType.DDL, eventTemp);
+                //check Argument
+                switch (generateType(eventTemp.size())) {
+                    case DDL:
+                        DataEvent ddlDataEvent = new DataEvent(DDL, eventTemp);
                         dataEvents.add(ddlDataEvent);
                         break;
-                    case 5:
+                    case DML:
                         DataEvent dmlDataEvent = new DataEvent(DataEvent.DataEventType.DML, eventTemp);
                         dataEvents.add(dmlDataEvent);
                         break;

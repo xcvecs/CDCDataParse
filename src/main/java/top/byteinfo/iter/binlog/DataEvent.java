@@ -17,10 +17,11 @@ public class DataEvent {
     }
 
     public enum DataEventType {
+
         DDL(2, "DDL"),
         DML(5, "DML");
-        private final Integer dataCount;
-        private final String dataType;
+        private Integer dataCount;
+        private String dataType;
 
 
         DataEventType(int dataCount, String dataType) {
@@ -28,11 +29,18 @@ public class DataEvent {
             this.dataType = dataType;
         }
 
+        public static DataEventType generateType(int dataCount) {
+            if (dataCount == 2) return DDL;
+            if (dataCount == 3) return DML;
+            throw new IllegalArgumentException(dataCount + "error");
+
+        }
+
         public String getDataType() {
             return dataType;
         }
 
-        public Integer getDataCount() {
+        public int getDataCount() {
             return dataCount;
         }
     }

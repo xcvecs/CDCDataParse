@@ -46,11 +46,7 @@ public class CdcDataParse implements Runnable {
     }
 
 
-    public static void main(String[] args) {
-        CdcDataParse cdcDataParse = new CdcDataParse();
-        cdcDataParse.run();
-        log.info("main end");
-    }
+
 
 
 
