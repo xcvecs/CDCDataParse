@@ -289,15 +289,4 @@ public class SchemaCapture {
         return result.toArray(new String[0]);
     }
 
-    public static class Sql {
-        public static String inListSQL(int count) {
-            return "(" + StringUtils.repeat("?", ", ", count) + ")";
-        }
-
-        public static void prepareInList(PreparedStatement s, int offset, Iterable<?> list) throws SQLException {
-            for (Object o : list) {
-                s.setObject(offset++, o);
-            }
-        }
-    }
 }
