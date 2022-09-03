@@ -11,7 +11,6 @@ public class DataEvent {
     private final LinkedList<Event> ddlList;
 
     public DataEvent(DataEventType dataEventType, LinkedList<Event> eventLinkedList) {
-        if (dataEventType.dataCount != eventLinkedList.size()) throw new RuntimeException("Event error ");
         this.dataEventType = dataEventType;
         this.ddlList = eventLinkedList;
     }

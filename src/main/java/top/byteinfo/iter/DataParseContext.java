@@ -4,7 +4,8 @@ import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.byteinfo.iter.binlog.DataEventListener;
 import top.byteinfo.iter.connect.BinLogConnector;
 import top.byteinfo.iter.schema.Schema;
@@ -19,10 +20,9 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 
-@Slf4j
 public class DataParseContext {
 
-    // private static final Logger log = Logger.getLogger(DataParseContext.class.getName());
+     private static final Logger log = LoggerFactory.getLogger(DataParseContext.class);
     private final DataParseConfig dataParseConfig;
     private DataSource dataSource;
     private BinLogConnector binLogConnector;
@@ -33,14 +33,14 @@ public class DataParseContext {
 
     public DataParseContext(DataParseConfig dataParseConfig) {
         this.dataParseConfig = dataParseConfig;
-        log.info("DataParseContext 初始化 start");
+        log.debug("DataParseContext 初始化 start");
         setup();
-        log.info("DataParseContext 初始化 end");
+        log.debug("DataParseContext 初始化 end");
 
 
-        log.info(" parse data 预处理 start ");
+        log.debug(" parse data 预处理 start ");
         parsePre();
-        log.info(" parse data 预处理  end");
+        log.debug(" parse data 预处理  end");
 
     }
 
@@ -78,13 +78,13 @@ public class DataParseContext {
     }
 
     public void parsePre() {
-        log.info("获取数据库 数据模型 start");
+        log.debug("获取数据库 数据模型 start");
         long l1 = dbGlobalLock();
         schema = dataModelCapture();
         Executors.newSingleThreadExecutor().submit(binLogConnector);
         long l2 = dbGlobalUNLock();
-        log.info(" time:" + (l2 - l1));
-        log.info("获取数据库 数据模型 end");
+        log.debug(" time:" + (l2 - l1));
+        log.debug("获取数据库 数据模型 end");
 
     }
 
@@ -98,18 +98,27 @@ public class DataParseContext {
         config.setUsername(properties.getProperty("dataSource.setUsername"));
         config.setPassword(properties.getProperty("dataSource.setPassword"));
         config.setJdbcUrl(properties.getProperty("dataSource.setJdbcUrl"));
-//        config.setMaximumPoolSize(Integer.parseInt(properties.getProperty("dataSource.setMaximumPoolSize")));
-//        config.setMinimumIdle(Integer.parseInt(properties.getProperty("dataSource.setMinimumIdle")));
+
+//        properties.setProperty("dataSource.setInitialSize", "5");
+//        properties.setProperty("dataSource.setMaxActive", "10");
+//        properties.setProperty("dataSource.setMinIdle", "3");
+//        properties.setProperty("dataSource.setMaxWait", "3000");
+
+//        config.setMaximumPoolSize(Integer.parseInt(properties.getProperty("dataSource.setInitialSize")));
+//        config.setMinimumIdle(Integer.parseInt(properties.getProperty("dataSource.setMinIdle")));
+//        config.setMaxLifetime(Long.parseLong(properties.getProperty("dataSource.setMaxWait")));
 
 //       DataSource dataSource = new DruidDataSource();
 //        dataSource.setDriverClassName(properties.getProperty("dataSource.setDriverClassName"));
 //        dataSource.setUsername(properties.getProperty("dataSource.setUsername"));
 //        dataSource.setPassword(properties.getProperty("dataSource.setPassword"));
 //        dataSource.setUrl(properties.getProperty("dataSource.setUrl"));
+
 //        dataSource.setInitialSize(Integer.parseInt(properties.getProperty("dataSource.setInitialSize")));
 //        dataSource.setMaxActive(Integer.parseInt(properties.getProperty("dataSource.setMaxActive")));
 //        dataSource.setMinIdle(Integer.parseInt(properties.getProperty("dataSource.setMinIdle")));
 //        dataSource.setMaxWait(Long.parseLong(properties.getProperty("dataSource.setMaxWait")));
+
         HikariDataSource hDataSource = new HikariDataSource(config);
             this.dataSource = hDataSource;
 
@@ -151,7 +160,7 @@ public class DataParseContext {
     }
 
     public Schema dataModelCapture() {
-        log.info("");
+        log.debug("");
         try {
             this.schema = schemaCapture.capture();
             return this.schema;

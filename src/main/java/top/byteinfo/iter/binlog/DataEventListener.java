@@ -3,19 +3,24 @@ package top.byteinfo.iter.binlog;
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
 import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.EventType;
-import lombok.extern.slf4j.Slf4j;
+import com.github.shyiko.mysql.binlog.event.WriteRowsEventData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingDeque;
-@Slf4j
+
+import static com.github.shyiko.mysql.binlog.event.EventType.EXT_WRITE_ROWS;
+
 public class DataEventListener implements BinaryLogClient.EventListener {
+
+    private static final Logger log= LoggerFactory.getLogger(DataEventListener.class);
+    LinkedBlockingDeque<Event> blockingDeque;
+    HashMap<EventType, Event> hashMap;//
     public DataEventListener(LinkedBlockingDeque<Event> blockingDeque, HashMap<EventType, Event> hashMap) {
         this.blockingDeque = blockingDeque;
         this.hashMap = hashMap;
     }
-
-    LinkedBlockingDeque<Event> blockingDeque;
-    HashMap<EventType, Event> hashMap;//
 
     @Override
     public void onEvent(Event event) {
@@ -25,8 +30,9 @@ public class DataEventListener implements BinaryLogClient.EventListener {
 //            return;
 //        }
 //        System.out.println(event);
-
-        log.info(event.getHeader().getEventType().name());
+        EventType eventType = event.getHeader().getEventType();
+        if (eventType.equals(EXT_WRITE_ROWS)) ((WriteRowsEventData) event.getData()).getRows();
+        log.debug(event.getHeader().getEventType().name());
         blockingDeque.add(event);
 //        hashMap.put(event.getHeader().getEventType(), event);
 //        determine(hashMap);

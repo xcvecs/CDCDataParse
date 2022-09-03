@@ -22,6 +22,10 @@ public class DataParseConfig {
         properties.setProperty("dataSource.setPassword", "root");
         properties.setProperty("dataSource.setJdbcUrl", "jdbc:mysql://localhost?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC");
 
+//        config.setMaximumPoolSize(Integer.parseInt(properties.getProperty("dataSource.setMaximumPoolSize")));
+//        config.setMinimumIdle(Integer.parseInt(properties.getProperty("dataSource.setMinimumIdle")));
+//        config.setMaxLifetime(Long.parseLong(properties.getProperty("dataSource.setMaxWait")));
+
         properties.setProperty("dataSource.setInitialSize", "5");
         properties.setProperty("dataSource.setMaxActive", "10");
         properties.setProperty("dataSource.setMinIdle", "3");

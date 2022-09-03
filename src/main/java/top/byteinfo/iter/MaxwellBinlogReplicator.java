@@ -3,8 +3,11 @@ package top.byteinfo.iter;
 import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.EventType;
 import com.github.shyiko.mysql.binlog.event.QueryEventData;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.byteinfo.iter.binlog.DataEvent;
+import top.byteinfo.iter.execption.BinLogFileException;
+import top.byteinfo.iter.execption.BoundaryConditionException;
 import top.byteinfo.iter.schema.Schema;
 import top.byteinfo.iter.schema.SchemaCapture;
 import top.byteinfo.iter.schema.Table;
@@ -16,12 +19,12 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.shyiko.mysql.binlog.event.EventType.*;
-import static top.byteinfo.iter.binlog.DataEvent.DataEventType.DDL;
-import static top.byteinfo.iter.binlog.DataEvent.DataEventType.generateType;
+import static top.byteinfo.iter.binlog.DataEvent.DataEventType.*;
+import static top.byteinfo.iter.util.CheckParam.dataEventPreCheck;
 
-@Slf4j
 public class MaxwellBinlogReplicator implements Runnable {
 
+    private static final Logger log = LoggerFactory.getLogger(MaxwellBinlogReplicator.class);
     private final LinkedBlockingDeque<Event> deque;
     private final LinkedBlockingDeque<DataEvent> dataEvents;
     private final LinkedList<Event> rowEventList;
@@ -55,7 +58,8 @@ public class MaxwellBinlogReplicator implements Runnable {
         try {
             return deque.poll(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            log.warn("...");
+            return null;
         }
     }
 
@@ -75,10 +79,10 @@ public class MaxwellBinlogReplicator implements Runnable {
          * todo
          */
         LinkedList<Event> eventTemp = new LinkedList<>();
-        log.info("event route start");
+        log.debug("event route starting");
         while (true) {
             if (!eventFormat) {
-                log.info("");
+                log.debug("");
                 Event event = ensureEvent();
                 EventType eventType = event.getHeader().getEventType();
                 if (eventType.equals(ROTATE)) {
@@ -92,30 +96,32 @@ public class MaxwellBinlogReplicator implements Runnable {
                 if (binlogValid && parseFlag) {
                     eventFormat = true;
                 } else {
-                    throw new RuntimeException("binlog file error");
+                    log.error("binlog file error");
+                    throw new BinLogFileException("");
                 }
             }
             if (eventTemp.size() != 0 && routCount == 0) {
                 //check Argument
+                dataEventPreCheck(eventTemp);
                 switch (generateType(eventTemp.size())) {
                     case DDL:
                         DataEvent ddlDataEvent = new DataEvent(DDL, eventTemp);
                         dataEvents.add(ddlDataEvent);
                         break;
                     case DML:
-                        DataEvent dmlDataEvent = new DataEvent(DataEvent.DataEventType.DML, eventTemp);
+                        DataEvent dmlDataEvent = new DataEvent(DML, eventTemp);
                         dataEvents.add(dmlDataEvent);
                         break;
                     default:
                         break;
                 }
             }
-            Event event = pollEvent();
+            Event event = ensureEvent();
             EventType eventType = event.getHeader().getEventType();
 
 
             if (eventType.equals(ANONYMOUS_GTID)) {
-                if (routCount != 0) throw new RuntimeException(" binlog route error ");
+                if (routCount != 0) throw new BoundaryConditionException();
                 eventTemp.add(event);
                 routCount++;
             }
@@ -147,11 +153,11 @@ public class MaxwellBinlogReplicator implements Runnable {
         Event event = pollEvent();
         int timeCount = 0;
         while (event == null) {
-            timeCount += timeCount < 15 ? 1 : 0;
+            timeCount += timeCount < 9 ? 3 : 0;
             try {
                 Thread.sleep(1L << timeCount);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                log.warn(e.getMessage());
             }
             event = pollEvent();
         }
@@ -162,10 +168,10 @@ public class MaxwellBinlogReplicator implements Runnable {
         /**
          * event 预处理
          */
-        log.info("异步预处理数据");
+        log.debug("异步预处理数据 0");
         Executors.newSingleThreadExecutor().submit(this::route);
+        log.debug("异步预处理数据 1");
 
-        log.info("check eventData");
         int count = 0;
         while (true) {
             int size = deque.size();
@@ -175,7 +181,7 @@ public class MaxwellBinlogReplicator implements Runnable {
             try {
                 Thread.sleep(1L << count);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                log.warn(e.getMessage());
             }
         }
     }
@@ -188,7 +194,15 @@ public class MaxwellBinlogReplicator implements Runnable {
     }
 
 
-    /*public void work() {
+    @Override
+    public void run() {
+        parseEventData();
+
+    }
+
+
+    public void source() {
+            /*public void work() {
 
         Event row = getRawEvent();
 
@@ -399,12 +413,5 @@ public class MaxwellBinlogReplicator implements Runnable {
         }
         return true;
     }*/
-
-    @Override
-    public void run() {
-        parseEventData();
-
     }
-
-
 }
