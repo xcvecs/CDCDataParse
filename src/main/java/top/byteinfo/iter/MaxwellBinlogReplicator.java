@@ -12,14 +12,22 @@ import top.byteinfo.iter.schema.Schema;
 import top.byteinfo.iter.schema.SchemaCapture;
 import top.byteinfo.iter.schema.Table;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
-import static com.github.shyiko.mysql.binlog.event.EventType.*;
-import static top.byteinfo.iter.binlog.DataEvent.DataEventType.*;
+import static com.github.shyiko.mysql.binlog.event.EventType.ANONYMOUS_GTID;
+import static com.github.shyiko.mysql.binlog.event.EventType.FORMAT_DESCRIPTION;
+import static com.github.shyiko.mysql.binlog.event.EventType.QUERY;
+import static com.github.shyiko.mysql.binlog.event.EventType.ROTATE;
+import static com.github.shyiko.mysql.binlog.event.EventType.XID;
+import static top.byteinfo.iter.binlog.DataEvent.DataEventType.DDL;
+import static top.byteinfo.iter.binlog.DataEvent.DataEventType.DML;
+import static top.byteinfo.iter.binlog.DataEvent.DataEventType.generateType;
 import static top.byteinfo.iter.util.CheckParam.dataEventPreCheck;
 
 public class MaxwellBinlogReplicator implements Runnable {
@@ -63,6 +71,21 @@ public class MaxwellBinlogReplicator implements Runnable {
         }
     }
 
+    private Event ensureEvent() {
+        // TODO
+        Event event = pollEvent();
+        int timeCount = 0;
+        while (event == null) {
+            timeCount += timeCount < 9 ? 3 : 0;
+            try {
+                Thread.sleep(1L << timeCount);
+            } catch (InterruptedException e) {
+                log.warn(e.getMessage());
+            }
+            event = pollEvent();
+        }
+        return event;
+    }
 
     /**
      * 1.挨个读取 序列。
@@ -148,21 +171,183 @@ public class MaxwellBinlogReplicator implements Runnable {
 
     }
 
-    private Event ensureEvent() {
-        // TODO
-        Event event = pollEvent();
-        int timeCount = 0;
-        while (event == null) {
-            timeCount += timeCount < 9 ? 3 : 0;
-            try {
-                Thread.sleep(1L << timeCount);
-            } catch (InterruptedException e) {
-                log.warn(e.getMessage());
-            }
-            event = pollEvent();
-        }
-        return event;
+    public void routeIter() {
+
     }
+
+    /**
+     *
+     */
+    public void maxwellRoute() {
+        boolean eventFormat = false;
+        boolean binlogValid = false;
+        boolean parseFlag = false;
+
+
+        while (true) {
+            if (!eventFormat) {
+                Event event0 = ensureEvent();
+                Event event1 = pollEvent();
+                if (event0.getHeader().getEventType().equals(ROTATE)) binlogValid = true;
+                if (event1.getHeader().getEventType().equals(FORMAT_DESCRIPTION))parseFlag = true;
+                if (binlogValid && parseFlag) eventFormat = true;
+                //
+            }
+            List<Event> atomEvent = new ArrayList<>();
+            Event event = ensureEvent();
+            switch (event.getHeader().getEventType()) {
+                case WRITE_ROWS:
+                case EXT_WRITE_ROWS:
+                case UPDATE_ROWS:
+                case EXT_UPDATE_ROWS:
+                case DELETE_ROWS:
+                case EXT_DELETE_ROWS:
+                    //todo
+                    log.error(event.toString());
+                    break;
+                case TABLE_MAP:
+                    //todo
+                    log.error(event.toString()+"");
+                    break;
+                case QUERY:// end
+                    QueryEventData qe = event.getData();
+                    String sql = qe.getSql();
+                    if ("BEGIN".equals(sql)) {
+                        try {
+                            handlerDMLTransactionRows(event, atomEvent);
+                        } catch (RuntimeException e) {
+                            break;
+                        }
+                    } else {
+                        handlerDDLEvent(event, atomEvent);
+                    }
+                    DataEvent ddlDataEvent = new DataEvent(DDL, atomEvent);
+                    dataEvents.add(ddlDataEvent);
+                    atomEvent.clear();
+                    break;
+                case ROTATE:
+                    log.info(event.toString());
+                    break;
+                case ANONYMOUS_GTID:
+                    atomEvent.add(event);
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void handlerDMLTransactionRows(Event event, List<Event> atomEvent) {
+
+        while (true) {
+            event = ensureEvent();
+
+
+            EventType eventType = event.getHeader().getEventType();
+
+            /*if (event.isCommitEvent()) {
+//                if (!buffer.isEmpty()) {
+//                    buffer.getLast().setTXCommit();
+//                    long timeSpent = buffer.getLast().getTimestampMillis() - beginEvent.getEvent().getHeader().getTimestamp();
+//                    transactionExecutionTime.update(timeSpent);
+//                    transactionRowCount.update(buffer.size());
+//                }
+                if(eventType == EventType.XID) {
+                    buffer.setXid(event.xidData().getXid());
+                }
+                return buffer;
+            }*/
+
+            if (eventType == EventType.XID) {
+                atomEvent.add(event);
+                return;
+            }
+
+            //todo  BoundaryCondition
+            switch (eventType) {
+                case WRITE_ROWS:
+                case UPDATE_ROWS:
+                case DELETE_ROWS:
+                case EXT_WRITE_ROWS:
+                case EXT_UPDATE_ROWS:
+                case EXT_DELETE_ROWS:
+                    /*Table table = tableCache.getTable(event.getTableID());
+
+                    if ( table != null && shouldOutputEvent(table.getDatabase(), table.getName(), filter, table.getColumnNames()) ) {
+                        List<RowMap> rows;
+                        try {
+                            rows = event.jsonMaps(table, getLastHeartbeatRead(), currentQuery);
+                        } catch ( ColumnDefCastException e ) {
+                            logColumnDefCastException(table, e);
+
+                            throw(e);
+                        }
+
+                        for ( RowMap r : rows )
+                            if (shouldOutputRowMap(table.getDatabase(), table.getName(), r, filter)) {
+                                buffer.add(r);
+                            }
+                    }
+                    currentQuery = null;*/
+                    // add event
+                    break;
+                case TABLE_MAP:
+                    //add event
+//                    TableMapEventData data = event.tableMapData();
+//                    tableCache.processEvent(getSchema(), this.filter, data.getTableId(), data.getDatabase(), data.getTable());
+                    break;
+                case ROWS_QUERY:
+//                    RowsQueryEventData rqed = event.getEvent().getData();
+//                    currentQuery = rqed.getQuery();
+                    break;
+                case QUERY:
+                    /*QueryEventData qe = event.queryData();
+                    String sql = qe.getSql();
+                    String upperCaseSql = sql.toUpperCase();*/
+
+                    /*if ( upperCaseSql.startsWith(BinlogConnectorEvent.SAVEPOINT)) {
+                        LOGGER.debug("Ignoring SAVEPOINT in transaction: {}", qe);
+                    } else if ( createTablePattern.matcher(sql).find() ) {
+                        // CREATE TABLE `foo` SELECT * FROM `bar` will put a CREATE TABLE
+                        // inside a transaction.  Note that this could, in rare cases, lead
+                        // to us starting on a WRITE_ROWS event -- we sync the schema position somewhere
+                        // kinda unsafe.
+                        processQueryEvent(event);
+                    } else if (upperCaseSql.startsWith("INSERT INTO MYSQL.RDS_") || upperCaseSql.startsWith("DELETE FROM MYSQL.RDS_")) {
+                        // RDS heartbeat events take the following form:
+                        // INSERT INTO mysql.rds_heartbeat2(id, value) values (1,1483041015005) ON DUPLICATE KEY UPDATE value = 1483041015005
+
+                        // Other RDS internal events like below:
+                        // INSERT INTO mysql.rds_sysinfo(name, value) values ('innodb_txn_key','Thu Nov 15 10:30:07 UTC 2018')
+                        // DELETE FROM mysql.rds_sysinfo where name = 'innodb_txn_key'
+
+                        // We don't need to process them, just ignore
+                    } else if (upperCaseSql.startsWith("DROP TEMPORARY TABLE")) {
+                        // Ignore temporary table drop statements inside transactions
+                    } else if ( upperCaseSql.startsWith("# DUMMY EVENT")) {
+                        // MariaDB injected event
+                    } else {
+                        LOGGER.warn("Unhandled QueryEvent @ {} inside transaction: {}", event.getPosition().fullPosition(), qe);
+                    }*/
+                    break;
+            }
+        }
+    }
+
+    private void handlerDDLEvent(Event event, List<Event> atomEvent) {
+        // update schema
+        atomEvent.add(event);
+        handlerSchemaChanged(event);
+    }
+
+    private void handlerSchemaChanged(Event event) {
+
+
+    }
+
+    private void handlerTransactionRows(Event event) {
+
+    }
+
 
     public void parseEventData() {
         /**

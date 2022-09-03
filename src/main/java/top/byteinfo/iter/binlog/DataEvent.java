@@ -2,15 +2,15 @@ package top.byteinfo.iter.binlog;
 
 import com.github.shyiko.mysql.binlog.event.Event;
 
-import java.util.LinkedList;
+import java.util.List;
 
 public class DataEvent {
 
 
     private final DataEventType dataEventType;
-    private final LinkedList<Event> ddlList;
+    private final List<Event> ddlList;
 
-    public DataEvent(DataEventType dataEventType, LinkedList<Event> eventLinkedList) {
+    public DataEvent(DataEventType dataEventType, List<Event> eventLinkedList) {
         this.dataEventType = dataEventType;
         this.ddlList = eventLinkedList;
     }
