@@ -1,5 +1,6 @@
 package top.byteinfo.iter.producer;
 
+import com.github.shyiko.mysql.binlog.event.Event;
 import top.byteinfo.iter.DataParseContext;
 
 public abstract class AbstractProducer {
@@ -10,4 +11,5 @@ public abstract class AbstractProducer {
     }
 
     abstract public void push(ChangedEvent cEvent) throws Exception;
+
 }

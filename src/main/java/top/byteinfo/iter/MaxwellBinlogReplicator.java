@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -100,95 +101,15 @@ public class MaxwellBinlogReplicator implements Runnable {
         return event;
     }
 
-    /**
-     * 1.挨个读取 序列。
-     * 2.
-     */
-    /*public void route() {
-        boolean eventFormat = false;
-        boolean binlogValid = false;
-        boolean parseFlag = false;
+    public DataEvent getDataEvent(){
+        return null;
+    }
 
-
-        int routCount = 0;
-
-        LinkedList<Event> eventTemp = new LinkedList<>();
-        log.debug("event route starting");
-        while (true) {
-            if (!eventFormat) {
-                log.debug("");
-                Event event = ensureEvent();
-                EventType eventType = event.getHeader().getEventType();
-                if (eventType.equals(ROTATE)) {
-                    binlogValid = true;
-                }
-                Event event1 = pollEvent();
-                if (event1.getHeader().getEventType().equals(FORMAT_DESCRIPTION)) {
-                    parseFlag = true;
-                }
-
-                if (binlogValid && parseFlag) {
-                    eventFormat = true;
-                } else {
-                    log.error("binlog file error");
-                    throw new BinLogFileException("");
-                }
-            }
-            if (eventTemp.size() != 0 && routCount == 0) {
-                //check Argument
-                dataEventPreCheck(eventTemp);
-                switch (generateType(eventTemp.size())) {
-                    case DDL:
-                        DataEvent ddlDataEvent = new DataEvent(DDL, eventTemp);
-                        dataEvents.add(ddlDataEvent);
-                        break;
-                    case DML:
-                        DataEvent dmlDataEvent = new DataEvent(DML, eventTemp);
-                        dataEvents.add(dmlDataEvent);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            Event event = ensureEvent();
-            EventType eventType = event.getHeader().getEventType();
-
-
-            if (eventType.equals(ANONYMOUS_GTID)) {
-                if (routCount != 0) throw new BoundaryConditionException();
-                eventTemp.add(event);
-                routCount++;
-            }
-
-
-            if (eventType.equals(QUERY)) {
-                eventTemp.add(event);
-                QueryEventData eventData = event.getData();//read .....
-                if (!eventData.getSql().equals("BEGIN")) {
-                    routCount = 0;
-                }
-            }
-            if (eventType.equals(XID)) {
-                eventTemp.add(event);
-                routCount = 0;
-                continue;
-            }
-
-            if (routCount == 0) continue;
-            eventTemp.add(event);
-
-
-        }
-
-    }*/
     public void routeIter() {
 
     }
-
-    /**
-     *
-     */
     public void maxwellRoute() {
+
         boolean eventFormat = false;
         boolean binlogValid = false;
         boolean parseFlag = false;
@@ -263,6 +184,7 @@ public class MaxwellBinlogReplicator implements Runnable {
 
 
             if (eventType == EventType.XID) {
+
                 atomEvent.add(event);
                 return;
             }
@@ -323,12 +245,9 @@ public class MaxwellBinlogReplicator implements Runnable {
 
 
     public void parseEventData() {
-        /**
-         * event 预处理
-         */
+
         log.debug("异步预处理数据 0");
-        this.maxwellRoute();
-//        Executors.newSingleThreadExecutor().submit(this::maxwellRoute);
+        Executors.newSingleThreadExecutor().submit(this::maxwellRoute);
         log.debug("异步预处理数据 1");
 
         int count = 0;
@@ -436,7 +355,7 @@ public class MaxwellBinlogReplicator implements Runnable {
         AbstractProducer producer = dataParseContext.getProducer();
 //        DataEvent dataEvent = dataEvents.p;
 
-        ChangedEvent changedEvent = new ChangedEvent(table.database,table.name,1l,1l,"false",data);
+        ChangedEvent changedEvent = new ChangedEvent(table.database,table.name,1l,null,"false",data);
         try {
             producer.push(changedEvent);
         } catch (Exception e) {

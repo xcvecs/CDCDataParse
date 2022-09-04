@@ -11,6 +11,9 @@ public class DataEvent {
     private final DataEventType dataEventType;
     private final List<Event> eventList;
 
+
+
+
     public DataEvent(DataEventType dataEventType, List<Event> eventLinkedList) {
         this.dataEventType = dataEventType;
 
