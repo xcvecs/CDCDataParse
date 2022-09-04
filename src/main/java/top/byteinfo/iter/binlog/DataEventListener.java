@@ -1,16 +1,28 @@
 package top.byteinfo.iter.binlog;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
+import com.github.shyiko.mysql.binlog.event.DeleteRowsEventData;
 import com.github.shyiko.mysql.binlog.event.Event;
+import com.github.shyiko.mysql.binlog.event.EventData;
 import com.github.shyiko.mysql.binlog.event.EventType;
+import com.github.shyiko.mysql.binlog.event.QueryEventData;
+import com.github.shyiko.mysql.binlog.event.UpdateRowsEventData;
 import com.github.shyiko.mysql.binlog.event.WriteRowsEventData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.github.shyiko.mysql.binlog.event.EventType.EXT_WRITE_ROWS;
+import static com.github.shyiko.mysql.binlog.event.EventType.FORMAT_DESCRIPTION;
+import static com.github.shyiko.mysql.binlog.event.EventType.ROTATE;
+import static com.github.shyiko.mysql.binlog.event.EventType.TABLE_MAP;
+import static com.github.shyiko.mysql.binlog.network.protocol.command.CommandType.QUERY;
 
 public class DataEventListener implements BinaryLogClient.EventListener {
 
@@ -32,10 +44,10 @@ public class DataEventListener implements BinaryLogClient.EventListener {
 //        System.out.println(event);
         EventType eventType = event.getHeader().getEventType();
         if (eventType.equals(EXT_WRITE_ROWS)) ((WriteRowsEventData) event.getData()).getRows();
-        log.debug(event.getHeader().getEventType().name());
+        log.debug("eventType:"+event.getHeader().getEventType().name());
         blockingDeque.add(event);
-//        hashMap.put(event.getHeader().getEventType(), event);
-//        determine(hashMap);
+
+        preDebug(event);
 
     }
 
@@ -43,7 +55,49 @@ public class DataEventListener implements BinaryLogClient.EventListener {
         return blockingDeque;
     }
 
-    /*void determine(HashMap<EventType, Event> hashMap) {
+
+    void preDebug(Event event){
+
+        switch (event.getHeader().getEventType()){
+            case WRITE_ROWS:
+            case EXT_WRITE_ROWS:
+                WriteRowsEventData wtData = event.getData();
+                List<Serializable[]> wtDataRows = wtData.getRows();
+                log.debug("pre");
+                break;
+            case UPDATE_ROWS:
+            case EXT_UPDATE_ROWS:
+                UpdateRowsEventData uData = event.getData();
+                List<Entry<Serializable[], Serializable[]>> uDataRows = uData.getRows();
+                log.debug("pre");
+                break;
+            case DELETE_ROWS:
+            case EXT_DELETE_ROWS:
+                DeleteRowsEventData dData = event.getData();
+                List<Serializable[]> dDataRows = dData.getRows();
+                log.debug("pre");
+                //todo
+                log.error(event.toString());
+                break;
+            case TABLE_MAP:
+                //todo
+                log.error(event.toString() + "");
+                break;
+            case QUERY:// end
+
+                break;
+            case ROTATE:
+                log.debug(event.toString());
+                break;
+            case FORMAT_DESCRIPTION:
+                log.debug("binlogfile start");
+                break;
+            case ANONYMOUS_GTID://start
+            default:
+                break;
+        }
+    }
+    void determine(HashMap<EventType, Event> hashMap) {
         if (hashMap.containsKey(ROTATE) || hashMap.containsKey(FORMAT_DESCRIPTION)) {
             hashMap.clear();
         }
@@ -75,6 +129,6 @@ public class DataEventListener implements BinaryLogClient.EventListener {
             System.out.println("e@e@e");
             hashMap.clear();
         }
-    }*/
+    }
 
 }

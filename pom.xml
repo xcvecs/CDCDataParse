@@ -35,19 +35,18 @@
             <version>8.0.28</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP -->
-<!--        -->
+        <!--        -->
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>4.0.3</version>
         </dependency>
-
-<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.slf4j/slf4j-api &ndash;&gt;
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version>
-        </dependency>-->
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.slf4j/slf4j-api &ndash;&gt;
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                    <version>1.7.36</version>
+                </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/com.zendesk/mysql-binlog-connector-java -->
         <dependency>
@@ -55,11 +54,24 @@
             <artifactId>mysql-binlog-connector-java</artifactId>
             <version>0.26.1</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.zendesk</groupId>-->
-<!--            <artifactId>mysql-binlog-connector-java</artifactId>-->
-<!--            <version>parse</version>-->
-<!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.83</version>
+        </dependency>
+
+        <!--        <dependency>-->
+        <!--            <groupId>com.zendesk</groupId>-->
+        <!--            <artifactId>mysql-binlog-connector-java</artifactId>-->
+        <!--            <version>parse</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -77,13 +89,7 @@
             <version>2.13.2.2</version>
             <scope>compile</scope>
         </dependency>
-<!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.zendesk/maxwell &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>com.zendesk</groupId>-->
-<!--            <artifactId>maxwell</artifactId>-->
-<!--            <version>1.37.3</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -108,8 +114,27 @@
 
     <profiles>
         <profile>
+            <id>dev</id>
+            <dependencies>
+                <!-- https://mvnrepository.com/artifact/com.zendesk/maxwell -->
+                <dependency>
+                    <groupId>com.zendesk</groupId>
+                    <artifactId>maxwell</artifactId>
+                    <version>1.37.3</version>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>debug</id>
             <dependencies>
+                <!-- https://mvnrepository.com/artifact/org.slf4j/jul-to-slf4j -->
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jul-to-slf4j</artifactId>
+                    <version>1.7.36</version>
+                </dependency>
+
                 <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
                 <dependency>
                     <groupId>ch.qos.logback</groupId>
@@ -184,8 +209,8 @@
             </build>
         </profile>
     </profiles>
-<!--    <build>-->
-<!--        <plugins>-->
-<!--        </plugins>-->
-<!--    </build>-->
+    <!--    <build>-->
+    <!--        <plugins>-->
+    <!--        </plugins>-->
+    <!--    </build>-->
 </project>

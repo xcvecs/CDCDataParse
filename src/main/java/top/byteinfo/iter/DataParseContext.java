@@ -8,27 +8,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.byteinfo.iter.binlog.DataEventListener;
 import top.byteinfo.iter.connect.BinLogConnector;
+import top.byteinfo.iter.producer.AbstractProducer;
+import top.byteinfo.iter.producer.StdoutProducer;
 import top.byteinfo.iter.schema.Schema;
 import top.byteinfo.iter.schema.SchemaCapture;
 import top.byteinfo.iter.schema.ServerCaseSensitivity;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.Properties;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class DataParseContext {
 
-     private static final Logger log = LoggerFactory.getLogger(DataParseContext.class);
+    private static final Logger log = LoggerFactory.getLogger(DataParseContext.class);
     private final DataParseConfig dataParseConfig;
     private DataSource dataSource;
     private BinLogConnector binLogConnector;
     private SchemaCapture schemaCapture;
     private MaxwellBinlogReplicator maxwellBinlogReplicator;
     private Schema schema;
+    private Connection connection;
+    private AbstractProducer producer;
 
 
     public DataParseContext(DataParseConfig dataParseConfig) {
@@ -69,19 +74,30 @@ public class DataParseContext {
         return schemaCapture;
     }
 
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public AbstractProducer getProducer() {
+        return producer;
+    }
+
     public void setup() {
 
         setupDataSource();
         setupSchemaCapture();
         setupBinlogConnect();
         setupBinlogReplicator();
+
+        setupContext();
+
     }
 
     public void parsePre() {
         log.debug("获取数据库 数据模型 start");
         long l1 = dbGlobalLock();
         schema = dataModelCapture();
-        Executors.newSingleThreadExecutor().submit(binLogConnector);
+        binLogConnector.tryConnect();
         long l2 = dbGlobalUNLock();
         log.debug(" time:" + (l2 - l1));
         log.debug("获取数据库 数据模型 end");
@@ -120,8 +136,12 @@ public class DataParseContext {
 //        dataSource.setMaxWait(Long.parseLong(properties.getProperty("dataSource.setMaxWait")));
 
         HikariDataSource hDataSource = new HikariDataSource(config);
-            this.dataSource = hDataSource;
-
+        this.dataSource = hDataSource;
+        try {
+            this.connection = hDataSource.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 
 
     }
@@ -133,7 +153,7 @@ public class DataParseContext {
             SchemaCapture capture = new SchemaCapture(connection, caseSensitivity);
             this.schemaCapture = capture;
 
-            Schema schema = capture.capture();
+            this.schema = capture.capture();
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -156,11 +176,16 @@ public class DataParseContext {
 
     public void setupBinlogReplicator() {
         LinkedBlockingDeque<Event> blockingDeque = binLogConnector.getEventListener().getBlockingDeque();
-        maxwellBinlogReplicator = new MaxwellBinlogReplicator(blockingDeque, schema, schemaCapture);
+
+        maxwellBinlogReplicator = new MaxwellBinlogReplicator(blockingDeque, schema, schemaCapture, this);
+    }
+
+    public void setupContext() {
+        this.producer = new StdoutProducer(this);
     }
 
     public Schema dataModelCapture() {
-        log.debug("");
+        log.debug(" 查询数据库");
         try {
             this.schema = schemaCapture.capture();
             return this.schema;
@@ -171,11 +196,30 @@ public class DataParseContext {
     }
 
     public long dbGlobalLock() {
+        log.debug("数据库 全局读锁 lock");
+        PreparedStatement preparedStatement = null;
+        try {
+            Statement statement = connection.createStatement();
+            statement.execute("FLUSH TABLES WITH READ LOCK");
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
         long start = System.currentTimeMillis();
         return start;
     }
 
     public long dbGlobalUNLock() {
+        try {
+//            preparedStatement = connection.prepareStatement("UNLOCK TABLES");
+            Statement statement = connection.createStatement();
+            statement.execute("UNLOCK TABLES");
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        log.debug("数据库 全局读锁 unlock");
         long end = System.currentTimeMillis();
         return end;
     }
