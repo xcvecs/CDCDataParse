@@ -90,7 +90,7 @@ public class MaxwellBinlogReplicator implements Runnable {
         Event event = pollEvent();
         int timeCount = 0;
         while (event == null) {
-            timeCount += timeCount < 9 ? 3 : 0;
+            timeCount += timeCount <= 9 ? 3 : 0;
             try {
                 Thread.sleep(1L << timeCount);
             } catch (InterruptedException e) {
@@ -250,14 +250,13 @@ public class MaxwellBinlogReplicator implements Runnable {
         Executors.newSingleThreadExecutor().submit(this::maxwellRoute);
         log.debug("异步预处理数据 1");
 
-        int count = 0;
+        int counts = 0;
         while (true) {
             int size = deque.size();
             int sizes = dataEvents.size();
-            log.debug(String.valueOf(sizes));
-            count += count >= 10 ? 0 : 2;
+            log.debug(sizes +" counts:"+counts++);
             try {
-                Thread.sleep(1L << count);
+                Thread.sleep(1L << 10);
             } catch (InterruptedException e) {
                 log.warn(e.getMessage());
             }
@@ -311,7 +310,7 @@ public class MaxwellBinlogReplicator implements Runnable {
                         }
                     }
                     data = wrowChanged.toString();
-                    System.out.println("write");//todo
+                    log.debug("write");
                     break;
                 case EXT_DELETE_ROWS:
                 case DELETE_ROWS:
@@ -326,7 +325,7 @@ public class MaxwellBinlogReplicator implements Runnable {
                         }
                     }
                     data = drowChanged.toString();
-                    System.out.println("delete");//todo
+                    log.debug("write");
                     break;
                 case EXT_UPDATE_ROWS:
                 case UPDATE_ROWS:
@@ -345,6 +344,7 @@ public class MaxwellBinlogReplicator implements Runnable {
                         }
                     }
                     data = urowChanged0 + " => " + urowChanged1;
+                    log.info("update");
                     break;
             }
         } catch (Exception e) {

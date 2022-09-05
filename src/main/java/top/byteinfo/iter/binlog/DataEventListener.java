@@ -47,7 +47,7 @@ public class DataEventListener implements BinaryLogClient.EventListener {
         log.debug("eventType:"+event.getHeader().getEventType().name());
         blockingDeque.add(event);
 
-        preDebug(event);
+//        preDebug(event);
 
     }
 
