@@ -19,6 +19,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.github.shyiko.mysql.binlog.event.EventType.FORMAT_DESCRIPTION;
+import static com.github.shyiko.mysql.binlog.event.EventType.ROTATE;
 import static top.byteinfo.schema.GlobalConstant.BEGIN;
 
 public class DycdcBinlogReplicator implements Runnable {
@@ -280,9 +282,12 @@ public class DycdcBinlogReplicator implements Runnable {
                     }
                     break;
                 case ROTATE:
-                case FORMAT_DESCRIPTION:
+                    log.info("format:"+ROTATE);atomEvent.clean();
 
-                    log.info("format");
+                    break;
+                case FORMAT_DESCRIPTION:
+                    log.info("format:"+FORMAT_DESCRIPTION);
+                    atomEvent.clean();
 //                    tableCache.clear();
                     break;
                 default:

@@ -35,6 +35,7 @@ public class AtomEvent {
 
     public void clean() {
         relationEvents.clear();
+        relationNativeEvents.clear();
     }
 
     private void check() {
