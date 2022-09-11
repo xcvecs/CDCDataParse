@@ -1,1 +1,13 @@
 /.idea/
+!**/**/.md
+!**/**/pom.xml
+!**/**/src/main/**
+
+**/.idea/
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+**/.mvn/**/**
+**/src/main/**/target/
+**/src/test/**/target/
+**/**/target/
